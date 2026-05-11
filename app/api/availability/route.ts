@@ -27,5 +27,5 @@ export async function GET(req: NextRequest) {
     booked.add(row.checkin_date)
   }
 
-  return NextResponse.json({ booked: [...booked] })
+  return NextResponse.json({ booked: Array.from(booked) })
 }

@@ -1,4 +1,4 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import { Noto_Serif_JP, Noto_Sans_JP } from 'next/font/google'
 import './globals.css'
 
@@ -18,6 +18,11 @@ const notoSans = Noto_Sans_JP({
 export const metadata: Metadata = {
   title: '@blueSky | 滋賀・高島市 一日一組限定キャンプ場',
   description: '忙しい日常から非日常へ。滋賀県高島市の一日一組限定キャンプ場。焚き火・サウナ・ドラム缶風呂。',
+}
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

@@ -54,4 +54,10 @@ describe('calcCancellationFee', () => {
     expect(result.fee).toBe(0)
     expect(result.rate).toBe(0)
   })
+
+  it('チェックイン日を過ぎている場合は100%', () => {
+    const result = calcCancellationFee('2026-07-31', totalAmount, '2026-08-01')
+    expect(result.fee).toBe(24000)
+    expect(result.rate).toBe(100)
+  })
 })

@@ -11,11 +11,14 @@ export function calcCancellationFee(
   totalAmount: number,
   today?: string,
 ): CancellationFeeResult {
+  if (totalAmount < 0) throw new RangeError('totalAmount must be >= 0')
+
   const baseDate = today ? new Date(today) : new Date()
   const checkin  = new Date(checkinDate)
   baseDate.setHours(0, 0, 0, 0)
   checkin.setHours(0, 0, 0, 0)
   const diffDays = Math.round((checkin.getTime() - baseDate.getTime()) / (1000 * 60 * 60 * 24))
+  // diffDays < 0 の場合（チェックイン日を過ぎている）も 100% 扱い
 
   if (diffDays >= 7) {
     return { fee: 0, rate: 0, label: '無料' }

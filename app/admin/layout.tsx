@@ -5,12 +5,11 @@ import AdminLogoutButton from './LogoutButton'
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const supabase = createSupabaseServerClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/admin/login')
+  const { data: { session } } = await supabase.auth.getSession()
+  if (!session) redirect('/admin/login')
 
   return (
     <div className="min-h-screen flex bg-warm-50">
-      {/* サイドバー */}
       <aside className="w-48 bg-warm-700 text-warm-100 flex flex-col shrink-0">
         <div className="px-5 py-5 font-serif font-bold text-lg text-white border-b border-warm-600">
           @blueSky 管理
@@ -33,7 +32,6 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           <AdminLogoutButton />
         </div>
       </aside>
-      {/* メインコンテンツ */}
       <main className="flex-1 overflow-auto p-8">{children}</main>
     </div>
   )

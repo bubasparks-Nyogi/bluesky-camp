@@ -1,7 +1,5 @@
 import ReservationCalendar from '@/components/admin/ReservationCalendar'
-
 export const metadata = { title: '予約カレンダー | @blueSky 管理' }
-
 export default function AdminPage() {
   return (
     <div>

@@ -3,12 +3,7 @@ import { useState, useEffect } from 'react'
 import type { ReservationRow } from '@/types/reservation'
 
 interface BlockedDate { id: string; date: string; reason: string | null }
-
-interface DayInfo {
-  date: string
-  reservation: ReservationRow | null
-  blocked: BlockedDate | null
-}
+interface DayInfo { date: string; reservation: ReservationRow | null; blocked: BlockedDate | null }
 
 function getDaysInMonth(year: number, month: number): string[] {
   const days: string[] = []
@@ -22,16 +17,14 @@ function getDaysInMonth(year: number, month: number): string[] {
 
 export default function ReservationCalendar() {
   const today = new Date()
-  const [year,  setYear]  = useState(today.getFullYear())
-  const [month, setMonth] = useState(today.getMonth() + 1)
-  const [days,  setDays]  = useState<DayInfo[]>([])
+  const [year,  setYear]    = useState(today.getFullYear())
+  const [month, setMonth]   = useState(today.getMonth() + 1)
+  const [days,  setDays]    = useState<DayInfo[]>([])
   const [loading, setLoading] = useState(true)
-  const [error,   setError]   = useState<string | null>(null)
   const [selected, setSelected] = useState<DayInfo | null>(null)
 
   useEffect(() => {
     setLoading(true)
-    setError(null)
     const ym = `${year}-${String(month).padStart(2, '0')}`
     Promise.all([
       fetch(`/api/admin/reservations?month=${ym}`).then(r => r.json()),
@@ -46,16 +39,14 @@ export default function ReservationCalendar() {
         blocked:     blocked.find(b => b.date === date) ?? null,
       })))
       setLoading(false)
-    }).catch(err => {
-      setError(err.message ?? '読み込みに失敗しました')
-      setLoading(false)
     })
   }, [year, month])
 
   const firstDow = new Date(year, month - 1, 1).getDay()
-
   const prev = () => { if (month === 1) { setYear(y => y - 1); setMonth(12) } else setMonth(m => m - 1) }
   const next = () => { if (month === 12) { setYear(y => y + 1); setMonth(1) } else setMonth(m => m + 1) }
+
+  const STAY_LABELS: Record<string, string> = { tent: 'テント', trailer_a: 'トレーラーA', trailer_b: 'トレーラーB', campervan: 'キャンピングカー' }
 
   return (
     <div>
@@ -65,9 +56,7 @@ export default function ReservationCalendar() {
         <button onClick={next} className="px-4 py-2 bg-warm-100 hover:bg-warm-200 rounded-lg text-warm-600 text-sm">次月 →</button>
       </div>
 
-      {error ? (
-        <p className="text-center text-red-400 py-12">{error}</p>
-      ) : loading ? (
+      {loading ? (
         <p className="text-center text-warm-400 py-12">読み込み中...</p>
       ) : (
         <>
@@ -101,32 +90,22 @@ export default function ReservationCalendar() {
         </>
       )}
 
-      {/* 詳細モーダル */}
       {selected && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4"
-             onClick={() => setSelected(null)}>
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4" onClick={() => setSelected(null)}>
           <div className="bg-white rounded-2xl p-6 max-w-sm w-full" onClick={e => e.stopPropagation()}>
             <h3 className="font-bold text-warm-700 mb-4">{selected.date}</h3>
-            {selected.blocked && (
-              <p className="text-sm text-gray-600 mb-3">🚫 ブロック理由: {selected.blocked.reason ?? 'なし'}</p>
-            )}
+            {selected.blocked && <p className="text-sm text-gray-600 mb-3">🚫 ブロック理由: {selected.blocked.reason ?? 'なし'}</p>}
             {selected.reservation && (
               <div className="text-sm space-y-1 text-warm-600">
                 <p><strong>お客様:</strong> {selected.reservation.guest_name}</p>
                 <p><strong>メール:</strong> {selected.reservation.guest_email}</p>
                 <p><strong>電話:</strong> {selected.reservation.guest_phone}</p>
-                <p><strong>宿泊タイプ:</strong> {selected.reservation.stay_type}</p>
+                <p><strong>宿泊タイプ:</strong> {(selected.reservation.stay_types as string[] ?? [selected.reservation.stay_type]).map(t => STAY_LABELS[t] ?? t).join('・')}</p>
                 <p><strong>合計:</strong> ¥{selected.reservation.total_amount.toLocaleString()}</p>
                 <p><strong>ステータス:</strong> {selected.reservation.status}</p>
-                {selected.reservation.agreed_to_terms_at && (
-                  <p className="text-xs text-warm-400">同意日時: {new Date(selected.reservation.agreed_to_terms_at).toLocaleString('ja-JP')}</p>
-                )}
               </div>
             )}
-            <button onClick={() => setSelected(null)}
-                    className="mt-4 w-full bg-warm-100 hover:bg-warm-200 text-warm-600 font-bold py-2 rounded-lg text-sm">
-              閉じる
-            </button>
+            <button onClick={() => setSelected(null)} className="mt-4 w-full bg-warm-100 hover:bg-warm-200 text-warm-600 font-bold py-2 rounded-lg text-sm">閉じる</button>
           </div>
         </div>
       )}

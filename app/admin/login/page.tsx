@@ -38,19 +38,16 @@ export default function AdminLoginPage() {
           <div>
             <label className="block text-sm text-warm-500 mb-1">メールアドレス</label>
             <input type="email" required value={email} onChange={e => setEmail(e.target.value)}
-                   className="w-full border border-warm-200 rounded-lg px-4 py-3 text-warm-700
-                              focus:outline-none focus:border-warm-400 text-base" />
+                   className="w-full border border-warm-200 rounded-lg px-4 py-3 text-warm-700 focus:outline-none focus:border-warm-400 text-base" />
           </div>
           <div>
             <label className="block text-sm text-warm-500 mb-1">パスワード</label>
             <input type="password" required value={password} onChange={e => setPassword(e.target.value)}
-                   className="w-full border border-warm-200 rounded-lg px-4 py-3 text-warm-700
-                              focus:outline-none focus:border-warm-400 text-base" />
+                   className="w-full border border-warm-200 rounded-lg px-4 py-3 text-warm-700 focus:outline-none focus:border-warm-400 text-base" />
           </div>
           {error && <p className="text-red-500 text-sm">{error}</p>}
           <button type="submit" disabled={loading}
-                  className="w-full bg-warm-300 hover:bg-warm-400 disabled:opacity-60 text-white
-                             font-bold py-3 rounded-lg transition-colors text-base mt-2">
+                  className="w-full bg-warm-300 hover:bg-warm-400 disabled:opacity-60 text-white font-bold py-3 rounded-lg transition-colors text-base mt-2">
             {loading ? 'ログイン中...' : 'ログイン'}
           </button>
         </form>

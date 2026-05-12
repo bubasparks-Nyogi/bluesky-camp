@@ -1,10 +1,12 @@
 'use client'
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import type { ReservationRow } from '@/types/reservation'
 
 const STAY_LABELS: Record<string, string> = { tent: 'テント', trailer_a: 'トレーラーA', trailer_b: 'トレーラーB', campervan: 'キャンピングカー' }
 
 export default function ReservationList({ reservations: initial }: { reservations: ReservationRow[] }) {
+  const router = useRouter()
   const [list,     setList]     = useState<ReservationRow[]>(initial)
   const [selected, setSelected] = useState<ReservationRow | null>(null)
   const [updating, setUpdating] = useState<string | null>(null)
@@ -91,7 +93,13 @@ export default function ReservationList({ reservations: initial }: { reservation
                 <><dt key={`dt-${k}`} className="text-warm-400">{k}</dt><dd key={`dd-${k}`} className="text-warm-700">{v}</dd></>
               ))}
             </dl>
-            <button onClick={() => setSelected(null)} className="mt-5 w-full bg-warm-100 hover:bg-warm-200 text-warm-600 font-bold py-2 rounded-lg text-sm">閉じる</button>
+            <button
+              onClick={() => { router.push(`/admin/reservations/${selected.id}`); setSelected(null) }}
+              className="mt-5 w-full bg-warm-300 hover:bg-warm-400 text-white font-bold py-2 rounded-lg text-sm"
+            >
+              ✏️ 編集する
+            </button>
+            <button onClick={() => setSelected(null)} className="mt-2 w-full bg-warm-100 hover:bg-warm-200 text-warm-600 font-bold py-2 rounded-lg text-sm">閉じる</button>
           </div>
         </div>
       )}

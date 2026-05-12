@@ -10,11 +10,19 @@ export default function StepPayment({ form, onBack }: Props) {
   const [reservationId, setReservationId] = useState<string | null>(null)
   const [initError, setInitError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+  const paymentConfigured = !!process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY &&
+    !process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY.includes('placeholder')
+
   const initPayment = async () => {
     setLoading(true)
     const res = await fetch('/api/reservations', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(form) })
     const data = await res.json()
     if (!res.ok) { setInitError(data.error); setLoading(false); return }
+    // Stripe 未設定時はそのまま完了ページへ
+    if (!data.clientSecret) {
+      window.location.href = `/reserve/complete?id=${data.reservationId}`
+      return
+    }
     setClientSecret(data.clientSecret); setReservationId(data.reservationId); setLoading(false)
   }
   if (!clientSecret) return (
@@ -24,7 +32,7 @@ export default function StepPayment({ form, onBack }: Props) {
       <p className="text-warm-500 text-sm mb-8">「決済画面へ進む」を押すとStripe決済画面が表示されます。</p>
       <div className="flex gap-3">
         <button onClick={onBack} className="flex-1 border border-warm-200 text-warm-500 font-bold py-3 rounded-lg text-base">← 戻る</button>
-        <button onClick={initPayment} disabled={loading} className="flex-1 bg-warm-300 hover:bg-warm-400 disabled:opacity-60 text-white font-bold py-3 rounded-lg transition-colors text-base">{loading ? '準備中...' : '決済画面へ進む'}</button>
+        <button onClick={initPayment} disabled={loading} className="flex-1 bg-warm-300 hover:bg-warm-400 disabled:opacity-60 text-white font-bold py-3 rounded-lg transition-colors text-base">{loading ? '準備中...' : paymentConfigured ? '決済画面へ進む' : '予約を確定する'}</button>
       </div>
     </div>
   )

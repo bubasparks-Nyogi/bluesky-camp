@@ -4,6 +4,9 @@ import { createPaymentIntent } from '@/lib/payment'
 import { calcTotal } from '@/lib/pricing'
 import type { ReservationFormData } from '@/types/reservation'
 
+// STRIPE_SECRET_KEY が placeholder を含む場合は決済をスキップする
+const stripeEnabled = !(process.env.STRIPE_SECRET_KEY ?? '').includes('placeholder')
+
 export async function POST(req: NextRequest) {
   const form: ReservationFormData = await req.json()
 
@@ -34,16 +37,23 @@ export async function POST(req: NextRequest) {
 
   const totalAmount = calcTotal(form, pricing)
 
-  const { clientSecret, paymentIntentId } = await createPaymentIntent({
-    amount:      totalAmount,
-    currency:    'jpy',
-    description: `@blueSky 予約 ${form.checkinDate}`,
-    metadata:    {
-      guestName:   form.guestName,
-      guestEmail:  form.guestEmail,
-      checkinDate: form.checkinDate,
-    },
-  })
+  let clientSecret:    string | null = null
+  let paymentIntentId: string | null = null
+
+  if (stripeEnabled) {
+    const result = await createPaymentIntent({
+      amount:      totalAmount,
+      currency:    'jpy',
+      description: `@blueSky 予約 ${form.checkinDate}`,
+      metadata:    {
+        guestName:   form.guestName,
+        guestEmail:  form.guestEmail,
+        checkinDate: form.checkinDate,
+      },
+    })
+    clientSecret    = result.clientSecret
+    paymentIntentId = result.paymentIntentId
+  }
 
   const { data: reservation, error } = await supabaseAdmin
     .from('reservations')

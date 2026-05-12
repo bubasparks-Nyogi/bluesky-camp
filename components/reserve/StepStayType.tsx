@@ -8,10 +8,10 @@ interface Props {
   onBack: () => void
 }
 
-const TYPES: Array<{ value: StayType; label: string; desc: string; icon: string }> = [
+const TYPES: Array<{ value: StayType; label: string; desc: string; capacity?: string; icon: string }> = [
   { value: 'tent',      label: 'テント設営',           desc: '持ち込みテント or レンタルテント', icon: '⛺' },
-  { value: 'trailer_a', label: 'トレーラーA',           desc: 'キャンピングトレーラー A棟',       icon: '🚌' },
-  { value: 'trailer_b', label: 'トレーラーB',           desc: 'キャンピングトレーラー B棟',       icon: '🚌' },
+  { value: 'trailer_a', label: 'トレーラーA',           desc: 'キャンピングトレーラー A棟',       capacity: '最大 大人4名 / 大人2名＋子供3名', icon: '🚌' },
+  { value: 'trailer_b', label: 'トレーラーB',           desc: 'キャンピングトレーラー B棟',       capacity: '最大 大人4名 / 大人2名＋子供3名', icon: '🚌' },
   { value: 'campervan', label: 'キャンピングカー乗り入れ', desc: 'マイカーで乗り入れ（EHU対応）',    icon: '🚐' },
 ]
 
@@ -45,6 +45,12 @@ export default function StepStayType({ form, onChange, onNext, onBack }: Props) 
               <div className="text-2xl mb-1">{t.icon}</div>
               <div className="font-bold text-warm-600 text-sm">{t.label}</div>
               <div className="text-warm-400 text-xs mt-1">{t.desc}</div>
+              {t.capacity && (
+                <div className="text-warm-500 text-xs mt-1.5 flex items-center gap-1">
+                  <span>👥</span>
+                  <span>{t.capacity}</span>
+                </div>
+              )}
             </button>
           )
         })}

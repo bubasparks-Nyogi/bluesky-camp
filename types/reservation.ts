@@ -43,24 +43,25 @@ export interface SelectedRentalItem {
 
 /** Supabase の reservations テーブル行 */
 export interface ReservationRow {
-  id:               string
-  checkin_date:     string
-  checkout_date:    string
-  status:           ReservationStatus
-  stay_type:        StayType
-  ehu:              boolean
-  sauna:            boolean
-  pet:              boolean
-  transfer_count:   number
-  transfer_station: string | null
-  rental_items:     SelectedRentalItem[]
-  guest_name:       string
-  guest_email:      string
-  guest_phone:      string
-  total_amount:     number
+  id:                string
+  checkin_date:      string
+  checkout_date:     string
+  status:            ReservationStatus
+  stay_type:         StayType
+  ehu:               boolean
+  sauna:             boolean
+  pet:               boolean
+  transfer_count:    number
+  transfer_station:  string | null
+  rental_items:      SelectedRentalItem[]
+  guest_name:        string
+  guest_email:       string
+  guest_phone:       string
+  total_amount:      number
   stripe_payment_id: string | null
-  line_user_id:     string | null
-  created_at:       string
+  line_user_id:      string | null
+  agreed_to_terms_at: string | null
+  created_at:        string
 }
 
 export const STEP_LABELS = [
@@ -71,8 +72,9 @@ export const STEP_LABELS = [
   '送迎',
   '道具レンタル',
   'お客様情報',
+  '利用規約',
   '金額確認',
   '決済',
 ] as const
 
-export type StepIndex = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8
+export type StepIndex = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9

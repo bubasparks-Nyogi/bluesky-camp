@@ -61,8 +61,9 @@ export async function POST(req: NextRequest) {
       guest_name:       form.guestName,
       guest_email:      form.guestEmail,
       guest_phone:      form.guestPhone,
-      total_amount:     totalAmount,
-      stripe_payment_id: paymentIntentId,
+      total_amount:       totalAmount,
+      stripe_payment_id:  paymentIntentId,
+      agreed_to_terms_at: new Date().toISOString(),
     })
     .select()
     .single()

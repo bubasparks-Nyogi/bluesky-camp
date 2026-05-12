@@ -1,0 +1,59 @@
+<h2>同意はどのタイミングで取りますか？</h2>
+<p class="subtitle">キャンセル料・損害補填・免責事項の同意</p>
+
+<div class="options">
+
+  <div class="option" data-choice="step" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>専用ステップを追加（推奨）</h3>
+      <div class="mockup" style="margin-top:8px;">
+        <div class="mockup-header">予約フロー</div>
+        <div class="mockup-body" style="font-size:0.8rem; display:flex; gap:4px; flex-wrap:wrap;">
+          <span style="background:#e8d5b0;padding:2px 6px;border-radius:3px;">日程</span>
+          <span style="color:#aaa;">→</span>
+          <span style="background:#e8d5b0;padding:2px 6px;border-radius:3px;">宿泊タイプ</span>
+          <span style="color:#aaa;">→ … →</span>
+          <span style="background:#e8d5b0;padding:2px 6px;border-radius:3px;">お客様情報</span>
+          <span style="color:#aaa;">→</span>
+          <span style="background:#d4845a;color:white;padding:2px 8px;border-radius:3px;font-weight:bold;">✅ 利用規約</span>
+          <span style="color:#aaa;">→</span>
+          <span style="background:#e8d5b0;padding:2px 6px;border-radius:3px;">金額確認</span>
+          <span style="color:#aaa;">→</span>
+          <span style="background:#e8d5b0;padding:2px 6px;border-radius:3px;">決済</span>
+        </div>
+      </div>
+      <p style="font-size:0.82rem; margin-top:8px;">全規約を1画面にまとめてスクロール読了＋チェックボックス3項目で同意。最も法的に明確。</p>
+      <div class="pros-cons">
+        <div class="pros"><h4>長所</h4><ul><li>同意の証拠が明確</li><li>見落としにくい</li></ul></div>
+        <div class="cons"><h4>短所</h4><ul><li>ステップが10→11に増える</li></ul></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="confirm" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>金額確認画面に統合</h3>
+      <div class="mockup" style="margin-top:8px;">
+        <div class="mockup-header">StepConfirm（現在の確認画面）</div>
+        <div class="mockup-body" style="font-size:0.8rem;">
+          <div>… 料金明細 …</div>
+          <div style="margin-top:8px; border-top:1px solid #ddd; padding-top:8px;">
+            <div style="color:#d4845a;">☑ キャンセルポリシーに同意</div>
+            <div style="color:#d4845a;">☑ 損害補填・免責事項に同意</div>
+          </div>
+          <div style="margin-top:8px; background:#d4845a;color:white;padding:4px;border-radius:3px;text-align:center;">決済へ進む →</div>
+        </div>
+      </div>
+      <p style="font-size:0.82rem; margin-top:8px;">確認画面の下部にチェックボックスを追加。ステップ数は変わらない。</p>
+      <div class="pros-cons">
+        <div class="pros"><h4>長所</h4><ul><li>ステップ数が増えない</li><li>実装が最もシンプル</li></ul></div>
+        <div class="cons"><h4>短所</h4><ul><li>確認画面が長くなる</li></ul></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<p class="subtitle" style="margin-top:20px;">クリックして選択 → ターミナルで教えてください</p>

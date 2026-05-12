@@ -6,7 +6,7 @@ export default function StepSauna({ form, onChange, onNext, onBack }: Props) {
     <div>
       <h3 className="font-serif text-xl text-warm-600 font-bold mb-6">サウナ利用</h3>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-8">
-        {[{ value: true, label: '利用する', desc: '+¥2,000', icon: '🧖' }, { value: false, label: '利用しない', desc: '無料', icon: '✕' }].map(opt => (
+        {[{ value: true, label: '利用する', desc: '無料', icon: '🧖' }, { value: false, label: '利用しない', desc: '', icon: '✕' }].map(opt => (
           <button key={String(opt.value)} onClick={() => onChange({ sauna: opt.value })}
             className={`p-5 rounded-xl border-2 text-center transition-colors ${form.sauna === opt.value ? 'border-warm-300 bg-warm-100' : 'border-warm-100 bg-white hover:border-warm-200'}`}>
             <div className="text-3xl mb-2">{opt.icon}</div>

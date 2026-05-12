@@ -7,7 +7,7 @@ export default function StepPet({ form, onChange, onNext, onBack }: Props) {
       <h3 className="font-serif text-xl text-warm-600 font-bold mb-2">ペット同伴</h3>
       <p className="text-warm-400 text-sm mb-6">小型犬まで可</p>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-8">
-        {[{ value: true, label: '同伴する', desc: '+¥2,000', icon: '🐕' }, { value: false, label: '同伴しない', desc: '無料', icon: '✕' }].map(opt => (
+        {[{ value: true, label: '同伴する', desc: '無料', icon: '🐕' }, { value: false, label: '同伴しない', desc: '', icon: '✕' }].map(opt => (
           <button key={String(opt.value)} onClick={() => onChange({ pet: opt.value })}
             className={`p-5 rounded-xl border-2 text-center transition-colors ${form.pet === opt.value ? 'border-warm-300 bg-warm-100' : 'border-warm-100 bg-white hover:border-warm-200'}`}>
             <div className="text-3xl mb-2">{opt.icon}</div>

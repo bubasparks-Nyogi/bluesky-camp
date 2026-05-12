@@ -1,0 +1,56 @@
+<h2>Phase 2 — 管理パネルのスコープ</h2>
+<p class="subtitle">どこまで作りますか？ 含めたい機能をすべて選んでください</p>
+
+<div class="options" data-multiselect>
+
+  <div class="option" data-choice="calendar" onclick="toggleSelect(this)">
+    <div class="letter">📅</div>
+    <div class="content">
+      <h3>予約カレンダー</h3>
+      <p>月間カレンダーで予約状況を一覧表示。日付をクリックして予約詳細を確認。</p>
+    </div>
+  </div>
+
+  <div class="option" data-choice="list" onclick="toggleSelect(this)">
+    <div class="letter">📋</div>
+    <div class="content">
+      <h3>予約一覧・管理</h3>
+      <p>予約の一覧表示・ステータス変更（confirmed/cancelled）・詳細閲覧。</p>
+    </div>
+  </div>
+
+  <div class="option" data-choice="pricing" onclick="toggleSelect(this)">
+    <div class="letter">💴</div>
+    <div class="content">
+      <h3>料金設定</h3>
+      <p>基本料金・各オプション料金をGUI上で変更。DBのpricingテーブルを直接編集不要に。</p>
+    </div>
+  </div>
+
+  <div class="option" data-choice="rental" onclick="toggleSelect(this)">
+    <div class="letter">🎒</div>
+    <div class="content">
+      <h3>レンタル道具管理</h3>
+      <p>レンタル品目の追加・編集・一時無効化（available フラグ）。</p>
+    </div>
+  </div>
+
+  <div class="option" data-choice="auth" onclick="toggleSelect(this)">
+    <div class="letter">🔐</div>
+    <div class="content">
+      <h3>ログイン認証</h3>
+      <p>管理パネルをパスワード保護（Supabase Auth or Next-Auth）。</p>
+    </div>
+  </div>
+
+  <div class="option" data-choice="block" onclick="toggleSelect(this)">
+    <div class="letter">🚫</div>
+    <div class="content">
+      <h3>日程ブロック</h3>
+      <p>オーナーが任意の日を「受付停止」にできる機能（メンテナンス・休業日など）。</p>
+    </div>
+  </div>
+
+</div>
+
+<p class="subtitle" style="margin-top:20px;">複数選択可 → ターミナルで「OK」または追加したいものを教えてください</p>

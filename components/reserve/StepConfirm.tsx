@@ -13,7 +13,14 @@ export default function StepConfirm({ form, onNext, onBack }: Props) {
     <div>
       <h3 className="font-serif text-xl text-warm-600 font-bold mb-6">内容確認</h3>
       <div className="bg-warm-50 rounded-xl p-5 space-y-2 text-sm mb-6">
-        {([['チェックイン', form.checkinDate], ['チェックアウト', form.checkoutDate], ['宿泊タイプ', STAY_LABELS[form.stayType]], ['お名前', form.guestName], ['メール', form.guestEmail], ['電話番号', form.guestPhone]] as [string, string][]).map(([label, value]) => (
+        {([
+          ['チェックイン', form.checkinDate],
+          ['チェックアウト', form.checkoutDate],
+          ['宿泊タイプ', (form.stayTypes ?? []).map(t => STAY_LABELS[t]).join('・') || '未選択'],
+          ['お名前', form.guestName],
+          ['メール', form.guestEmail],
+          ['電話番号', form.guestPhone],
+        ] as [string, string][]).map(([label, value]) => (
           <div key={label} className="flex justify-between"><span className="text-warm-400">{label}</span><span className="text-warm-600 font-medium">{value}</span></div>
         ))}
       </div>

@@ -1,9 +1,17 @@
 // lib/pricing.ts
 import type { ReservationFormData, PricingItem } from '@/types/reservation'
 
+/** チェックイン〜チェックアウト間の泊数（最低1泊） */
+export function calcNights(checkin: string, checkout: string): number {
+  if (!checkin || !checkout) return 1
+  const diff = new Date(checkout).getTime() - new Date(checkin).getTime()
+  return Math.max(1, Math.round(diff / (1000 * 60 * 60 * 24)))
+}
+
 /**
  * フォームデータと料金マスタから合計金額を計算する。
- * 決済抽象化レイヤー (payment.ts) と確認画面 (StepConfirm) の両方から呼ぶ。
+ * 基本料金 = base × 泊数 × 宿泊タイプ数
+ * サウナ・ペット同伴は無料（加算なし）
  */
 export function calcTotal(
   form: ReservationFormData,
@@ -12,10 +20,17 @@ export function calcTotal(
   const get = (key: string) =>
     pricing.find(p => p.itemKey === key && p.active)?.amount ?? 0
 
-  let total = get('base')
-  if (form.ehu && form.stayType === 'campervan') total += get('ehu')
-  if (form.sauna)        total += get('sauna')
-  if (form.pet)          total += get('pet')
+  const nights    = calcNights(form.checkinDate, form.checkoutDate)
+  const typeCount = form.stayTypes?.length ?? 1
+
+  let total = get('base') * nights * typeCount
+
+  // EHU はキャンピングカー選択時のみ
+  if (form.ehu && form.stayTypes?.includes('campervan'))
+    total += get('ehu')
+
+  // サウナ・ペットは無料のため加算しない
+
   if (form.transferCount > 0)
     total += get('transfer') * form.transferCount
 
@@ -34,31 +49,35 @@ export function calcBreakdown(
     pricing.find(p => p.itemKey === key && p.active)
 
   const rows: Array<{ label: string; amount: number }> = []
-  const base = get('base')
-  if (base) rows.push({ label: base.label, amount: base.amount })
+  const base     = get('base')
+  const nights   = calcNights(form.checkinDate, form.checkoutDate)
+  const typeCount = form.stayTypes?.length ?? 1
 
-  if (form.ehu && form.stayType === 'campervan') {
+  if (base) {
+    const label = typeCount > 1 || nights > 1
+      ? `${base.label} × ${nights}泊 × ${typeCount}タイプ`
+      : base.label
+    rows.push({ label, amount: base.amount * nights * typeCount })
+  }
+
+  if (form.ehu && form.stayTypes?.includes('campervan')) {
     const ehu = get('ehu')
     if (ehu) rows.push({ label: ehu.label, amount: ehu.amount })
   }
-  if (form.sauna) {
-    const s = get('sauna')
-    if (s) rows.push({ label: s.label, amount: s.amount })
-  }
-  if (form.pet) {
-    const p = get('pet')
-    if (p) rows.push({ label: p.label, amount: p.amount })
-  }
+
+  // サウナ・ペットは無料のため明細に表示しない
+
   if (form.transferCount > 0) {
     const t = get('transfer')
     if (t) rows.push({
-      label: `${t.label} × ${form.transferCount}名`,
+      label:  `${t.label} × ${form.transferCount}名`,
       amount: t.amount * form.transferCount,
     })
   }
+
   for (const item of form.rentalItems) {
     rows.push({
-      label: `${item.name} × ${item.qty}`,
+      label:  `${item.name} × ${item.qty}`,
       amount: item.price * item.qty,
     })
   }

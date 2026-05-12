@@ -1,0 +1,71 @@
+<h2>Phase 2 全体設計</h2>
+<p class="subtitle">確認して問題なければ設計書を書きます</p>
+
+<div class="section">
+  <h3>📋 A. 既存サイト追加（ルール・同意）</h3>
+
+  <div style="display:flex;flex-direction:column;gap:6px;font-size:0.85rem;margin-bottom:12px;">
+    <div style="background:#e8d5b0;padding:6px 12px;border-radius:4px;color:#5a3000;">
+      <strong>① ホームページ RULES セクション追加</strong><br/>
+      <span style="font-size:0.8rem;">持ち込み可（食品・キャンプ道具・ペット道具）/ ペット詳細（小型動物・全長80㎝まで）/ 注意事項の要約</span>
+    </div>
+    <div style="background:#e8d5b0;padding:6px 12px;border-radius:4px;color:#5a3000;">
+      <strong>② /rules ページ新設</strong><br/>
+      <span style="font-size:0.8rem;">全文表示：持ち込み規定・ペット規定・損害補填・免責事項（破損・紛失・死亡責任）・キャンセルポリシー</span>
+    </div>
+    <div style="background:#d4845a;color:white;padding:6px 12px;border-radius:4px;">
+      <strong>③ 予約フローに「利用規約」ステップ追加（お客様情報 → 利用規約 → 金額確認）</strong><br/>
+      <span style="font-size:0.8rem;">☑ キャンセルポリシーに同意　☑ 損害補填に同意　☑ 免責事項に同意（全チェックで次へ進める）</span>
+    </div>
+    <div style="background:#e8d5b0;padding:6px 12px;border-radius:4px;color:#5a3000;">
+      <strong>④ DB: reservations に agreed_to_terms_at カラム追加</strong>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>🛡 B. 管理パネル（/admin）— Supabase Auth</h3>
+
+  <div style="display:flex;gap:8px;margin-bottom:12px;">
+    <!-- サイドバー -->
+    <div style="background:#3d2010;color:#f9eed8;padding:10px;border-radius:6px;min-width:140px;font-size:0.8rem;">
+      <div style="font-weight:bold;margin-bottom:8px;font-size:0.85rem;">@blueSky 管理</div>
+      <div style="padding:4px 8px;background:#5a3010;border-radius:3px;margin-bottom:2px;">📅 予約カレンダー</div>
+      <div style="padding:4px 8px;margin-bottom:2px;">📋 予約一覧</div>
+      <div style="padding:4px 8px;margin-bottom:2px;">💴 料金設定</div>
+      <div style="padding:4px 8px;margin-bottom:2px;">🎒 レンタル管理</div>
+      <div style="padding:4px 8px;margin-bottom:2px;">🚫 日程ブロック</div>
+      <div style="padding:4px 8px;margin-top:8px;border-top:1px solid #5a3010;">🚪 ログアウト</div>
+    </div>
+    <!-- メインコンテンツ -->
+    <div style="flex:1;background:#fff8f0;border-radius:6px;padding:10px;font-size:0.8rem;">
+      <div style="font-weight:bold;color:#5a3000;margin-bottom:8px;">2026年7月 予約カレンダー</div>
+      <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px;text-align:center;">
+        <div style="color:#aaa;font-size:0.7rem;">日</div><div style="color:#aaa;font-size:0.7rem;">月</div><div style="color:#aaa;font-size:0.7rem;">火</div><div style="color:#aaa;font-size:0.7rem;">水</div><div style="color:#aaa;font-size:0.7rem;">木</div><div style="color:#aaa;font-size:0.7rem;">金</div><div style="color:#aaa;font-size:0.7rem;">土</div>
+        <div></div><div></div><div style="padding:3px;background:#f0e8d0;border-radius:2px;">1</div><div style="padding:3px;background:#d4845a;color:white;border-radius:2px;font-size:0.7rem;">2<br/>予約済</div><div style="padding:3px;background:#f0e8d0;border-radius:2px;">3</div><div style="padding:3px;background:#f0e8d0;border-radius:2px;">4</div><div style="padding:3px;background:#f0e8d0;border-radius:2px;">5</div>
+        <div style="padding:3px;background:#aaa;color:white;border-radius:2px;font-size:0.7rem;">6<br/>休</div><div style="padding:3px;background:#f0e8d0;border-radius:2px;">7</div><div style="padding:3px;background:#f0e8d0;border-radius:2px;">8</div><div style="padding:3px;background:#f0e8d0;border-radius:2px;">…</div>
+      </div>
+      <div style="margin-top:6px;font-size:0.7rem;color:#aaa;">■ 予約済 ■ 日程ブロック □ 空き</div>
+    </div>
+  </div>
+
+  <div style="display:flex;gap:6px;flex-wrap:wrap;font-size:0.8rem;">
+    <div style="background:#f0e8d0;padding:4px 10px;border-radius:4px;color:#5a3000;"><strong>/admin/login</strong> — Supabase Authログイン</div>
+    <div style="background:#f0e8d0;padding:4px 10px;border-radius:4px;color:#5a3000;"><strong>/admin</strong> — 月間カレンダー</div>
+    <div style="background:#f0e8d0;padding:4px 10px;border-radius:4px;color:#5a3000;"><strong>/admin/reservations</strong> — 一覧・ステータス変更</div>
+    <div style="background:#f0e8d0;padding:4px 10px;border-radius:4px;color:#5a3000;"><strong>/admin/pricing</strong> — 料金GUI編集</div>
+    <div style="background:#f0e8d0;padding:4px 10px;border-radius:4px;color:#5a3000;"><strong>/admin/rental-items</strong> — 品目管理</div>
+    <div style="background:#f0e8d0;padding:4px 10px;border-radius:4px;color:#5a3000;"><strong>/admin/blocked-dates</strong> — 日程ブロック</div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>🗄 DB 追加</h3>
+  <div style="font-size:0.82rem;color:#5a3000;">
+    <div>• <code>blocked_dates</code> テーブル（date, reason, created_at）</div>
+    <div>• <code>reservations.agreed_to_terms_at</code> カラム追加（timestamptz）</div>
+    <div>• Supabase Auth ユーザー（管理者1名をDashboardで作成）</div>
+  </div>
+</div>
+
+<p class="subtitle" style="margin-top:20px;">問題なければターミナルで「OK」→ 設計書を書きます</p>

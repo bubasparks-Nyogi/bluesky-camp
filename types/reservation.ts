@@ -20,13 +20,13 @@ export interface PricingItem {
 
 /** 予約フォームの入力状態（/reserve ページ内で管理） */
 export interface ReservationFormData {
-  checkinDate:     string   // YYYY-MM-DD
-  checkoutDate:    string   // YYYY-MM-DD
-  stayType:        StayType
-  ehu:             boolean  // キャンピングカー選択時のみ有効
+  checkinDate:     string      // YYYY-MM-DD
+  checkoutDate:    string      // YYYY-MM-DD
+  stayTypes:       StayType[]  // 複数選択可
+  ehu:             boolean     // キャンピングカー選択時のみ有効
   sauna:           boolean
   pet:             boolean
-  transferCount:   number   // 0 = なし
+  transferCount:   number      // 0 = なし
   transferStation: string
   rentalItems:     SelectedRentalItem[]
   guestName:       string
@@ -47,7 +47,8 @@ export interface ReservationRow {
   checkin_date:      string
   checkout_date:     string
   status:            ReservationStatus
-  stay_type:         StayType
+  stay_type:         StayType         // 後方互換（先頭タイプ）
+  stay_types:        StayType[]       // 複数タイプ
   ehu:               boolean
   sauna:             boolean
   pet:               boolean

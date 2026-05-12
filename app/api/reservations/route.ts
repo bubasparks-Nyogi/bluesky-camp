@@ -51,7 +51,8 @@ export async function POST(req: NextRequest) {
       checkin_date:     form.checkinDate,
       checkout_date:    form.checkoutDate,
       status:           'pending',
-      stay_type:        form.stayType,
+      stay_type:        form.stayTypes?.[0] ?? 'tent',   // 後方互換
+      stay_types:       form.stayTypes ?? [],             // 複数タイプ
       ehu:              form.ehu,
       sauna:            form.sauna,
       pet:              form.pet,

@@ -12,7 +12,7 @@ import StepGuestInfo from './StepGuestInfo'
 import StepTerms    from './StepTerms'
 import StepConfirm   from './StepConfirm'
 import StepPayment   from './StepPayment'
-const INITIAL: ReservationFormData = { checkinDate: '', checkoutDate: '', stayType: 'tent', ehu: false, sauna: false, pet: false, transferCount: 0, transferStation: '', rentalItems: [], guestName: '', guestEmail: '', guestPhone: '' }
+const INITIAL: ReservationFormData = { checkinDate: '', checkoutDate: '', stayTypes: [], ehu: false, sauna: false, pet: false, transferCount: 0, transferStation: '', rentalItems: [], guestName: '', guestEmail: '', guestPhone: '' }
 export default function ReserveFlow() {
   const [step, setStep] = useState<StepIndex>(0)
   const [form, setForm] = useState<ReservationFormData>(INITIAL)

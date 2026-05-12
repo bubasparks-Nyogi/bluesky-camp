@@ -2,6 +2,7 @@ import Hero            from '@/components/home/Hero'
 import Experience      from '@/components/home/Experience'
 import Facilities      from '@/components/home/Facilities'
 import Plan            from '@/components/home/Plan'
+import Rules          from '@/components/home/Rules'
 import BookingCalendar from '@/components/home/BookingCalendar'
 import Access          from '@/components/home/Access'
 import Contact         from '@/components/home/Contact'
@@ -13,6 +14,7 @@ export default function HomePage() {
       <Experience />
       <Facilities />
       <Plan />
+      <Rules />
       <section id="booking" className="py-20 px-4 bg-warm-100">
         <div className="max-w-sm mx-auto text-center">
           <h2 className="font-serif text-2xl md:text-3xl text-warm-600 mb-2">空き確認</h2>

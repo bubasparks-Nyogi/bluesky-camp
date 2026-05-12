@@ -9,6 +9,7 @@ import StepPet       from './StepPet'
 import StepTransfer  from './StepTransfer'
 import StepRental    from './StepRental'
 import StepGuestInfo from './StepGuestInfo'
+import StepTerms    from './StepTerms'
 import StepConfirm   from './StepConfirm'
 import StepPayment   from './StepPayment'
 const INITIAL: ReservationFormData = { checkinDate: '', checkoutDate: '', stayType: 'tent', ehu: false, sauna: false, pet: false, transferCount: 0, transferStation: '', rentalItems: [], guestName: '', guestEmail: '', guestPhone: '' }
@@ -26,8 +27,9 @@ export default function ReserveFlow() {
     <StepTransfer key={4} form={form} onChange={update} onNext={next} onBack={back} />,
     <StepRental key={5} form={form} onChange={update} onNext={next} onBack={back} />,
     <StepGuestInfo key={6} form={form} onChange={update} onNext={next} onBack={back} />,
-    <StepConfirm key={7} form={form} onNext={next} onBack={back} />,
-    <StepPayment key={8} form={form} onBack={back} />,
+    <StepTerms     key={7} onNext={next} onBack={back} />,
+    <StepConfirm   key={8} form={form} onNext={next} onBack={back} />,
+    <StepPayment   key={9} form={form} onBack={back} />,
   ]
   return (
     <div className="max-w-lg mx-auto px-4 py-10 min-h-screen">

@@ -13,6 +13,7 @@ export default function AdminLoginPage() {
   const [password, setPassword] = useState('')
   const [error,    setError]    = useState<string | null>(null)
   const [loading,  setLoading]  = useState(false)
+  const [showPass, setShowPass] = useState(false)
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -42,8 +43,13 @@ export default function AdminLoginPage() {
           </div>
           <div>
             <label className="block text-sm text-warm-500 mb-1">パスワード</label>
-            <input type="password" required value={password} onChange={e => setPassword(e.target.value)}
+            <input type={showPass ? 'text' : 'password'} required value={password} onChange={e => setPassword(e.target.value)}
                    className="w-full border border-warm-200 rounded-lg px-4 py-3 text-warm-700 focus:outline-none focus:border-warm-400 text-base" />
+            <label className="flex items-center gap-2 mt-2 cursor-pointer select-none">
+              <input type="checkbox" checked={showPass} onChange={e => setShowPass(e.target.checked)}
+                     className="w-4 h-4 accent-warm-300" />
+              <span className="text-xs text-warm-400">パスワードを表示する</span>
+            </label>
           </div>
           {error && <p className="text-red-500 text-sm">{error}</p>}
           <button type="submit" disabled={loading}

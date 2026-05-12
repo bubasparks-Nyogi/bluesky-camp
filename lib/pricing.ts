@@ -8,10 +8,18 @@ export function calcNights(checkin: string, checkout: string): number {
   return Math.max(1, Math.round(diff / (1000 * 60 * 60 * 24)))
 }
 
+/** 宿泊タイプに対応する pricing item_key を返す */
+function stayTypeKey(stayType: string): string {
+  return stayType === 'tent' ? 'tent_base' : 'base'
+}
+
 /**
  * フォームデータと料金マスタから合計金額を計算する。
- * 基本料金 = base × 泊数 × 宿泊タイプ数
+ * 基本料金 = 各宿泊タイプの料金 × 泊数 の合計
+ * テント: tent_base キー（¥15,000/泊）
+ * トレーラー・キャンピングカー: base キー（¥24,000/泊）
  * サウナ・ペット同伴は無料（加算なし）
+ * EHU は使用量料金制のため予約時加算なし
  */
 export function calcTotal(
   form: ReservationFormData,
@@ -20,14 +28,12 @@ export function calcTotal(
   const get = (key: string) =>
     pricing.find(p => p.itemKey === key && p.active)?.amount ?? 0
 
-  const nights    = calcNights(form.checkinDate, form.checkoutDate)
-  const typeCount = form.stayTypes?.length ?? 1
+  const nights = calcNights(form.checkinDate, form.checkoutDate)
+  const types  = form.stayTypes?.length ? form.stayTypes : ['tent']
 
-  let total = get('base') * nights * typeCount
+  let total = types.reduce((sum, t) => sum + get(stayTypeKey(t)) * nights, 0)
 
-  // EHU はキャンピングカー選択時のみ
-  if (form.ehu && form.stayTypes?.includes('campervan'))
-    total += get('ehu')
+  // EHU は使用量料金制のため自動加算しない
 
   // サウナ・ペットは無料のため加算しない
 
@@ -49,21 +55,25 @@ export function calcBreakdown(
     pricing.find(p => p.itemKey === key && p.active)
 
   const rows: Array<{ label: string; amount: number }> = []
-  const base     = get('base')
-  const nights   = calcNights(form.checkinDate, form.checkoutDate)
-  const typeCount = form.stayTypes?.length ?? 1
+  const nights = calcNights(form.checkinDate, form.checkoutDate)
+  const types  = form.stayTypes?.length ? form.stayTypes : ['tent']
 
-  if (base) {
-    const label = typeCount > 1 || nights > 1
-      ? `${base.label} × ${nights}泊 × ${typeCount}タイプ`
-      : base.label
-    rows.push({ label, amount: base.amount * nights * typeCount })
+  // 各宿泊タイプを個別に内訳表示
+  for (const t of types) {
+    const item = get(stayTypeKey(t))
+    if (item) {
+      const typeLabel = t === 'tent'      ? 'テント設営'
+                      : t === 'trailer_a' ? 'トレーラーA'
+                      : t === 'trailer_b' ? 'トレーラーB'
+                      : 'キャンピングカー'
+      const label = nights > 1
+        ? `${typeLabel} × ${nights}泊`
+        : typeLabel
+      rows.push({ label, amount: item.amount * nights })
+    }
   }
 
-  if (form.ehu && form.stayTypes?.includes('campervan')) {
-    const ehu = get('ehu')
-    if (ehu) rows.push({ label: ehu.label, amount: ehu.amount })
-  }
+  // EHU は使用量料金制のため明細に表示しない
 
   // サウナ・ペットは無料のため明細に表示しない
 

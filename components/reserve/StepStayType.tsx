@@ -30,7 +30,11 @@ export default function StepStayType({ form, onChange, onNext, onBack }: Props) 
   return (
     <div>
       <h3 className="font-serif text-xl text-warm-600 font-bold mb-2">宿泊タイプを選択</h3>
-      <p className="text-warm-400 text-sm mb-5">複数選択可（各タイプ分の料金が加算されます）</p>
+      <p className="text-warm-400 text-sm mb-3">複数選択可（各タイプ分の料金が加算されます）</p>
+      <div className="bg-warm-100 border border-warm-200 rounded-lg px-4 py-2.5 mb-5 text-sm text-warm-600 flex items-center gap-2">
+        <span>✨</span>
+        <span>全ての宿泊プランにコンシェル代が入っています</span>
+      </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
         {TYPES.map(t => {
           const isSelected = selected.includes(t.value)
@@ -63,7 +67,7 @@ export default function StepStayType({ form, onChange, onNext, onBack }: Props) 
             className="w-5 h-5 accent-warm-300" />
           <div>
             <div className="font-bold text-warm-600 text-sm">EHU外部電源を使用する</div>
-            <div className="text-warm-400 text-xs">+¥1,000</div>
+            <div className="text-warm-400 text-xs">使用量料金制</div>
           </div>
         </label>
       )}

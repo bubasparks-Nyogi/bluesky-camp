@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { constructWebhookEvent } from '@/lib/payment'
 import { supabaseAdmin } from '@/lib/supabase'
 import { sendReservationConfirmedEmail } from '@/lib/email'
+import { sendOwnerLineNotification } from '@/lib/notifications'
 
 export async function POST(req: NextRequest) {
   const payload = await req.text()
@@ -29,6 +30,8 @@ export async function POST(req: NextRequest) {
     if (reservation) {
       // 確定メール送信（ベストエフォート）
       sendReservationConfirmedEmail(reservation).catch(console.error)
+      // オーナーへ LINE 通知（ベストエフォート）
+      sendOwnerLineNotification(reservation).catch(console.error)
     }
   }
 

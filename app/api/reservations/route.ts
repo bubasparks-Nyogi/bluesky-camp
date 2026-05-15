@@ -3,6 +3,7 @@ import { supabaseAdmin } from '@/lib/supabase'
 import { createPaymentIntent } from '@/lib/payment'
 import { calcTotal } from '@/lib/pricing'
 import { sendReservationEmails } from '@/lib/email'
+import { sendOwnerLineNotification } from '@/lib/notifications'
 import type { ReservationFormData } from '@/types/reservation'
 
 // STRIPE_SECRET_KEY が placeholder を含む場合は決済をスキップする
@@ -87,6 +88,11 @@ export async function POST(req: NextRequest) {
     reservation,
     stripeEnabled ? 'pending' : 'confirmed',
   ).catch(console.error)
+
+  // Stripe 未設定（即時確定）の場合のみ LINE 通知（ベストエフォート）
+  if (!stripeEnabled) {
+    sendOwnerLineNotification(reservation).catch(console.error)
+  }
 
   return NextResponse.json({ clientSecret, reservationId: reservation.id })
 }

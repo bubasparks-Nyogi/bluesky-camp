@@ -21,20 +21,23 @@ interface Props {
   transferStation: string | null
   totalAmount:     number
   siteUrl:         string
+  status:          'pending' | 'confirmed'   // ← 追加
 }
 
 export default function ReservationConfirm({
   reservationId, guestName, checkinDate, checkoutDate,
   stayTypes, sauna, pet, ehu, transferCount, transferStation,
-  totalAmount, siteUrl,
+  totalAmount, siteUrl, status,
 }: Props) {
-  const shortId   = reservationId.slice(0, 8).toUpperCase()
-  const detailUrl = `${siteUrl}/reserve/lookup/${reservationId}`
-  const typeLabel = stayTypes.map(t => STAY_LABELS[t] ?? t).join('・')
+  const shortId     = reservationId.slice(0, 8).toUpperCase()
+  const detailUrl   = `${siteUrl}/reserve/lookup/${reservationId}`
+  const typeLabel   = stayTypes.map(t => STAY_LABELS[t] ?? t).join('・')
+  const statusLabel = status === 'confirmed' ? '確定' : '確認中（決済待ち）'
+  const statusColor = status === 'confirmed' ? '#16a34a' : '#d97706'
 
   return (
     <Html lang="ja">
-      <Preview>【@blueSky】ご予約確認 - {shortId}</Preview>
+      <Preview>【@blueSky】ご予約{status === 'confirmed' ? '確認' : '受付'} - {shortId}</Preview>
       <Body style={body}>
         <Container style={container}>
           {/* ヘッダー */}
@@ -49,7 +52,12 @@ export default function ReservationConfirm({
             {/* 予約詳細 */}
             <Section style={card}>
               <Text style={cardRow}><strong>予約番号</strong>{shortId}</Text>
-              <Text style={cardRow}><strong>ステータス</strong>確認中</Text>
+              <Text style={{ ...cardRow, color: statusColor }}>
+                <strong style={{ color: '#5a3010' }}>ステータス</strong>{statusLabel}
+              </Text>
+              {status === 'pending' && (
+                <Text style={pendingNote}>※ 決済完了後に確定メールをお送りします</Text>
+              )}
               <Hr style={divider} />
               <Text style={cardRow}><strong>チェックイン</strong>{checkinDate}</Text>
               <Text style={cardRow}><strong>チェックアウト</strong>{checkoutDate}</Text>
@@ -105,6 +113,7 @@ const card:       React.CSSProperties = { backgroundColor: '#f9eed8', borderRadi
 const cardRow:    React.CSSProperties = { color: '#5a3010', fontSize: '14px', margin: '4px 0', display: 'flex', gap: '16px' }
 const totalRow:   React.CSSProperties = { color: '#5a3010', fontSize: '16px', fontWeight: 'bold', margin: '4px 0' }
 const divider:    React.CSSProperties = { borderColor: '#f0c080', margin: '12px 0' }
+const pendingNote:React.CSSProperties = { color: '#d97706', fontSize: '11px', margin: '2px 0 8px' }
 const button:     React.CSSProperties = { backgroundColor: '#d4845a', color: '#ffffff', padding: '12px 24px', borderRadius: '24px', fontSize: '14px', fontWeight: 'bold', textDecoration: 'none', display: 'inline-block', marginBottom: '24px' }
 const policyBox:  React.CSSProperties = { backgroundColor: '#f9eed8', borderLeft: '3px solid #d4845a', padding: '12px 16px', marginTop: '24px' }
 const policyTitle:React.CSSProperties = { color: '#5a3010', fontSize: '13px', fontWeight: 'bold', marginBottom: '4px' }

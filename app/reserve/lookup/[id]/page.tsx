@@ -36,11 +36,20 @@ export default async function ReservationLookupDetailPage({
   if (!r) notFound()
 
   const feeResult = calcCancellationFee(r.checkin_date, r.total_amount)
-  // stay_types（複数）があればそれを使い、なければ stay_type（単一）にフォールバック
-  const types = Array.isArray(r.stay_types) && r.stay_types.length
+  const types     = Array.isArray(r.stay_types) && r.stay_types.length
     ? (r.stay_types as string[])
     : [(r.stay_type as string)]
   const canCancel = r.status !== 'cancelled'
+
+  // 泊数計算（最低1泊）
+  const nights = Math.max(1, Math.round(
+    (new Date(r.checkout_date).getTime() - new Date(r.checkin_date).getTime())
+    / (1000 * 60 * 60 * 24)
+  ))
+
+  const rentalItems = Array.isArray(r.rental_items)
+    ? (r.rental_items as { name: string; qty: number; price: number }[])
+    : []
 
   return (
     <div className="min-h-screen bg-warm-50">
@@ -71,9 +80,6 @@ export default async function ReservationLookupDetailPage({
               ['サウナ',         r.sauna ? '利用' : 'なし'],
               ['ペット',         r.pet   ? '同伴' : 'なし'],
               ['EHU',            r.ehu   ? '使用（使用量料金制）' : 'なし'],
-              ['送迎',           r.transfer_count > 0
-                ? `${r.transfer_count}名（${r.transfer_station}）`
-                : 'なし'],
               ['お名前',         r.guest_name],
               ['メール',         r.guest_email],
               ['電話番号',       r.guest_phone],
@@ -85,14 +91,37 @@ export default async function ReservationLookupDetailPage({
             ))}
           </dl>
 
-          {Array.isArray(r.rental_items) && r.rental_items.length > 0 && (
+          {/* 送迎カード */}
+          {r.transfer_count > 0 && (
             <div className="mt-4 pt-4 border-t border-warm-100">
-              <p className="text-xs text-warm-400 mb-2">レンタル道具</p>
-              {(r.rental_items as { name: string; qty: number; price: number }[]).map((item, i) => (
-                <p key={i} className="text-sm text-warm-700">
-                  {item.name} × {item.qty}
-                </p>
-              ))}
+              <p className="text-xs text-warm-400 mb-2">🚌 送迎</p>
+              <div className="bg-warm-50 rounded-lg p-3 text-sm">
+                <p className="font-medium text-warm-700">{r.transfer_station}</p>
+                <p className="text-warm-500 mt-0.5">{r.transfer_count}名</p>
+              </div>
+            </div>
+          )}
+
+          {/* レンタル道具カード */}
+          {rentalItems.length > 0 && (
+            <div className="mt-4 pt-4 border-t border-warm-100">
+              <p className="text-xs text-warm-400 mb-2">🎒 レンタル道具</p>
+              <div className="space-y-2">
+                {rentalItems.map((item, i) => {
+                  const subtotal = item.price * item.qty * nights
+                  return (
+                    <div key={i} className="bg-warm-50 rounded-lg p-3 flex justify-between items-start text-sm">
+                      <div>
+                        <p className="font-medium text-warm-700">{item.name} × {item.qty}個</p>
+                        <p className="text-xs text-warm-400 mt-0.5">
+                          ¥{item.price.toLocaleString()}/泊 × {nights}泊
+                        </p>
+                      </div>
+                      <p className="font-bold text-warm-700">¥{subtotal.toLocaleString()}</p>
+                    </div>
+                  )
+                })}
+              </div>
             </div>
           )}
 

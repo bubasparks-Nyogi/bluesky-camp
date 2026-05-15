@@ -32,11 +32,18 @@ interface ReservationEmailData {
 
 /**
  * 予約作成後：お客様への確認メール + オーナーへの通知メールを送信する。
- * 失敗しても例外を投げない（呼び出し元でベストエフォート処理すること）。
+ * @param r      予約データ
+ * @param status 'pending'（確認中）または 'confirmed'（確定）。デフォルト 'pending'
  */
-export async function sendReservationEmails(r: ReservationEmailData): Promise<void> {
+export async function sendReservationEmails(
+  r: ReservationEmailData,
+  status: 'pending' | 'confirmed' = 'pending',
+): Promise<void> {
   const stayTypes = r.stay_types?.length ? r.stay_types : [r.stay_type]
   const shortId   = r.id.slice(0, 8).toUpperCase()
+  const subject   = status === 'confirmed'
+    ? `【@blueSky】ご予約確認 - ${shortId}`
+    : `【@blueSky】ご予約受付 - ${shortId}`
 
   const [guestHtml, ownerHtml] = await Promise.all([
     render(ReservationConfirm({
@@ -52,6 +59,7 @@ export async function sendReservationEmails(r: ReservationEmailData): Promise<vo
       transferStation: r.transfer_station,
       totalAmount:     r.total_amount,
       siteUrl:         SITE,
+      status,
     })),
     render(ReservationNotify({
       reservationId:   r.id,
@@ -75,7 +83,7 @@ export async function sendReservationEmails(r: ReservationEmailData): Promise<vo
     resend.emails.send({
       from:    FROM,
       to:      r.guest_email,
-      subject: `【@blueSky】ご予約確認 - ${shortId}`,
+      subject,
       html:    guestHtml,
     }),
     resend.emails.send({
@@ -85,6 +93,40 @@ export async function sendReservationEmails(r: ReservationEmailData): Promise<vo
       html:    ownerHtml,
     }),
   ])
+}
+
+/**
+ * Stripe 決済完了後（Webhook）：お客様への「ご予約確定」メールを 1 通送信する。
+ * オーナーへの再通知は不要（予約作成時に送信済み）。
+ */
+export async function sendReservationConfirmedEmail(
+  r: ReservationEmailData,
+): Promise<void> {
+  const stayTypes = r.stay_types?.length ? r.stay_types : [r.stay_type]
+  const shortId   = r.id.slice(0, 8).toUpperCase()
+
+  const guestHtml = await render(ReservationConfirm({
+    reservationId:   r.id,
+    guestName:       r.guest_name,
+    checkinDate:     r.checkin_date,
+    checkoutDate:    r.checkout_date,
+    stayTypes,
+    sauna:           r.sauna,
+    pet:             r.pet,
+    ehu:             r.ehu,
+    transferCount:   r.transfer_count,
+    transferStation: r.transfer_station,
+    totalAmount:     r.total_amount,
+    siteUrl:         SITE,
+    status:          'confirmed',
+  }))
+
+  await resend.emails.send({
+    from:    FROM,
+    to:      r.guest_email,
+    subject: `【@blueSky】ご予約確定 - ${shortId}`,
+    html:    guestHtml,
+  })
 }
 
 /**

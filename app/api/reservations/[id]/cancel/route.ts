@@ -2,6 +2,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 import { calcCancellationFee } from '@/lib/cancellation'
+import { sendCancellationEmails } from '@/lib/email'
 
 export async function POST(
   req: NextRequest,
@@ -12,10 +13,10 @@ export async function POST(
     return NextResponse.json({ error: 'メールアドレスが必要です' }, { status: 400 })
   }
 
-  // 予約を取得
+  // 予約を取得（メール送信に必要なフィールドも含めて取得）
   const { data: reservation, error: fetchErr } = await supabaseAdmin
     .from('reservations')
-    .select('id, guest_email, status, checkin_date, total_amount')
+    .select('id, guest_name, guest_email, guest_phone, status, checkin_date, checkout_date, stay_type, stay_types, sauna, pet, ehu, transfer_count, transfer_station, total_amount')
     .eq('id', params.id)
     .single()
 
@@ -45,6 +46,9 @@ export async function POST(
   if (updateErr) {
     return NextResponse.json({ error: updateErr.message }, { status: 500 })
   }
+
+  // メール送信（ベストエフォート：失敗しても処理は成功扱い）
+  sendCancellationEmails(reservation, feeResult).catch(console.error)
 
   return NextResponse.json({
     ok:  true,

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 import { createPaymentIntent } from '@/lib/payment'
 import { calcTotal } from '@/lib/pricing'
+import { sendReservationEmails } from '@/lib/email'
 import type { ReservationFormData } from '@/types/reservation'
 
 // STRIPE_SECRET_KEY が placeholder を含む場合は決済をスキップする
@@ -80,6 +81,9 @@ export async function POST(req: NextRequest) {
     .single()
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+
+  // メール送信（ベストエフォート：失敗しても予約は成功扱い）
+  sendReservationEmails(reservation).catch(console.error)
 
   return NextResponse.json({ clientSecret, reservationId: reservation.id })
 }

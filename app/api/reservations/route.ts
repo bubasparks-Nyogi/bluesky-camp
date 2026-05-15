@@ -61,7 +61,7 @@ export async function POST(req: NextRequest) {
     .insert({
       checkin_date:     form.checkinDate,
       checkout_date:    form.checkoutDate,
-      status:           'pending',
+      status:           stripeEnabled ? 'pending' : 'confirmed',
       stay_type:        form.stayTypes?.[0] ?? 'tent',   // 後方互換
       stay_types:       form.stayTypes ?? [],             // 複数タイプ
       ehu:              form.ehu,
@@ -83,7 +83,10 @@ export async function POST(req: NextRequest) {
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
   // メール送信（ベストエフォート：失敗しても予約は成功扱い）
-  sendReservationEmails(reservation).catch(console.error)
+  sendReservationEmails(
+    reservation,
+    stripeEnabled ? 'pending' : 'confirmed',
+  ).catch(console.error)
 
   return NextResponse.json({ clientSecret, reservationId: reservation.id })
 }

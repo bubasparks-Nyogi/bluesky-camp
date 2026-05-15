@@ -19,3 +19,20 @@ export async function lineReply(userId: string, text: string): Promise<void> {
     }),
   })
 }
+
+/**
+ * 予約確定時にオーナーへ LINE 通知を送信する。
+ * OWNER_LINE_USER_ID が未設定の場合は静かにスキップする。
+ */
+export async function sendOwnerLineNotification(r: {
+  guest_name:   string
+  checkin_date: string
+  stay_type:    string
+  total_amount: number
+}): Promise<void> {
+  const userId = process.env.OWNER_LINE_USER_ID
+  if (!userId) return
+
+  const text = `【予約確定】${r.guest_name} 様\n📅 ${r.checkin_date}\n🏕 ${r.stay_type}\n💴 ¥${r.total_amount.toLocaleString()}`
+  await lineReply(userId, text)
+}

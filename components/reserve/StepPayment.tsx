@@ -18,9 +18,9 @@ export default function StepPayment({ form, onBack }: Props) {
     const res = await fetch('/api/reservations', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(form) })
     const data = await res.json()
     if (!res.ok) { setInitError(data.error); setLoading(false); return }
-    // Stripe 未設定時はそのまま完了ページへ
+    // Stripe 未設定時は予約詳細ページへ直接遷移
     if (!data.clientSecret) {
-      window.location.href = `/reserve/complete?id=${data.reservationId}`
+      window.location.href = `/reserve/lookup/${data.reservationId}`
       return
     }
     setClientSecret(data.clientSecret); setReservationId(data.reservationId); setLoading(false)
@@ -43,7 +43,7 @@ function PaymentForm({ reservationId, onBack }: { reservationId: string; onBack:
   const [error, setError] = useState<string | null>(null); const [loading, setLoading] = useState(false)
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault(); if (!stripe || !elements) return; setLoading(true)
-    const { error: err } = await stripe.confirmPayment({ elements, confirmParams: { return_url: `${window.location.origin}/reserve/complete?id=${reservationId}` } })
+    const { error: err } = await stripe.confirmPayment({ elements, confirmParams: { return_url: `${window.location.origin}/reserve/lookup/${reservationId}` } })
     if (err) { setError(err.message ?? '決済に失敗しました'); setLoading(false) }
   }
   return (

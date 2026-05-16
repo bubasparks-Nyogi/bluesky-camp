@@ -22,12 +22,17 @@ interface Props {
   totalAmount:     number
   siteUrl:         string
   status:          'pending' | 'confirmed'   // ← 追加
+  weatherIcon?:    string
+  weatherLabel?:   string
+  weatherTempMax?: number
+  weatherTempMin?: number
 }
 
 export default function ReservationConfirm({
   reservationId, guestName, checkinDate, checkoutDate,
   stayTypes, sauna, pet, ehu, transferCount, transferStation,
   totalAmount, siteUrl, status,
+  weatherIcon, weatherLabel, weatherTempMax, weatherTempMin,
 }: Props) {
   const shortId     = reservationId.slice(0, 8).toUpperCase()
   const detailUrl   = `${siteUrl}/reserve/lookup/${reservationId}`
@@ -80,6 +85,16 @@ export default function ReservationConfirm({
               予約を確認する・キャンセルはこちら
             </Button>
 
+            {/* 天気予報 */}
+            {weatherLabel && (
+              <Section style={weatherBox}>
+                <Text style={policyTitle}>チェックイン日の天気予報</Text>
+                <Text style={{ ...policyText, fontSize: '14px' }}>
+                  {weatherIcon} {weatherLabel}　最高 {weatherTempMax}℃ / 最低 {weatherTempMin}℃
+                </Text>
+              </Section>
+            )}
+
             {/* キャンセルポリシー */}
             <Section style={policyBox}>
               <Text style={policyTitle}>キャンセルポリシー</Text>
@@ -116,6 +131,7 @@ const divider:    React.CSSProperties = { borderColor: '#f0c080', margin: '12px 
 const pendingNote:React.CSSProperties = { color: '#d97706', fontSize: '11px', margin: '2px 0 8px' }
 const button:     React.CSSProperties = { backgroundColor: '#d4845a', color: '#ffffff', padding: '12px 24px', borderRadius: '24px', fontSize: '14px', fontWeight: 'bold', textDecoration: 'none', display: 'inline-block', marginBottom: '24px' }
 const policyBox:  React.CSSProperties = { backgroundColor: '#f9eed8', borderLeft: '3px solid #d4845a', padding: '12px 16px', marginTop: '24px' }
+const weatherBox: React.CSSProperties = { backgroundColor: '#e0f2fe', borderLeft: '3px solid #38bdf8', padding: '12px 16px', marginTop: '24px' }
 const policyTitle:React.CSSProperties = { color: '#5a3010', fontSize: '13px', fontWeight: 'bold', marginBottom: '4px' }
 const policyText: React.CSSProperties = { color: '#7c4a1e', fontSize: '12px', margin: '2px 0' }
 const footer:     React.CSSProperties = { backgroundColor: '#3d2010', padding: '16px 24px' }

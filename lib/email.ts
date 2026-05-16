@@ -6,6 +6,7 @@ import ReservationNotify   from '@/emails/ReservationNotify'
 import CancellationConfirm from '@/emails/CancellationConfirm'
 import CancellationNotify  from '@/emails/CancellationNotify'
 import type { CancellationFeeResult } from '@/lib/cancellation'
+import { getWeatherForecast } from '@/lib/weather'
 
 const resend    = new Resend(process.env.RESEND_API_KEY!)
 const FROM      = process.env.RESEND_FROM_EMAIL!
@@ -45,6 +46,16 @@ export async function sendReservationEmails(
     ? `【@blueSky】ご予約確認 - ${shortId}`
     : `【@blueSky】ご予約受付 - ${shortId}`
 
+  // 天気予報取得（失敗しても続行）
+  const weather = await getWeatherForecast(r.checkin_date).catch(() => null)
+
+  const weatherProps = weather ? {
+    weatherIcon:    weather.icon,
+    weatherLabel:   weather.label,
+    weatherTempMax: weather.tempMax,
+    weatherTempMin: weather.tempMin,
+  } : {}
+
   const [guestHtml, ownerHtml] = await Promise.all([
     render(ReservationConfirm({
       reservationId:   r.id,
@@ -60,6 +71,7 @@ export async function sendReservationEmails(
       totalAmount:     r.total_amount,
       siteUrl:         SITE,
       status,
+      ...weatherProps,
     })),
     render(ReservationNotify({
       reservationId:   r.id,

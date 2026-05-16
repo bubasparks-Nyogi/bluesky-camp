@@ -1,7 +1,22 @@
+import type { Metadata } from 'next'
 import Link from 'next/link'
 
-export const metadata = {
-  title: '利用規約 | @blueSky',
+export const metadata: Metadata = {
+  title: '利用規約',
+  description: '@blueSky キャンプ場の利用規約・キャンセルポリシー・注意事項。',
+  openGraph: {
+    title: '利用規約 | @blueSky',
+    description: '@blueSky キャンプ場の利用規約・キャンセルポリシー・注意事項。',
+    url: '/rules',
+  },
+  twitter: {
+    card: 'summary',
+    title: '利用規約 | @blueSky',
+    description: '@blueSky キャンプ場の利用規約・キャンセルポリシー・注意事項。',
+  },
+  alternates: {
+    canonical: '/rules',
+  },
 }
 
 export default function RulesPage() {

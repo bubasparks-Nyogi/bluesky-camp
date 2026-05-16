@@ -18,10 +18,22 @@ export async function POST(req: NextRequest) {
   const { data: { session } } = await supabase.auth.getSession()
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const body = await req.json()
+  let body: Record<string, unknown>
+  try {
+    body = await req.json()
+  } catch {
+    return NextResponse.json({ error: 'リクエスト形式が不正です' }, { status: 400 })
+  }
   const { question, answer, category, sort_order, is_published } = body
   if (!question || !answer) {
     return NextResponse.json({ error: 'question と answer が必要です' }, { status: 400 })
+  }
+  const VALID_CATEGORIES = ['general', 'pricing', 'access', 'facility']
+  if (category !== undefined && !VALID_CATEGORIES.includes(category as string)) {
+    return NextResponse.json({ error: 'category が不正です' }, { status: 400 })
+  }
+  if (sort_order !== undefined && !Number.isInteger(sort_order)) {
+    return NextResponse.json({ error: 'sort_order は整数で指定してください' }, { status: 400 })
   }
 
   const { data, error } = await supabaseAdmin.from('faqs')

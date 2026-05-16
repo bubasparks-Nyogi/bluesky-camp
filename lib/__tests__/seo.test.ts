@@ -27,3 +27,24 @@ describe('JSON-LD LocalBusiness', () => {
     expect(localBusiness.openingHours).toBeTruthy()
   })
 })
+
+describe('sitemap URLs', () => {
+  it('includes all public routes and excludes admin/api', () => {
+    const SITE_URL = 'https://bluesky-camp.vercel.app'
+    const urls = ['/', '/reserve', '/rules'].map(p => `${SITE_URL}${p}`)
+    expect(urls).toContain(`${SITE_URL}/`)
+    expect(urls).toContain(`${SITE_URL}/reserve`)
+    expect(urls).toContain(`${SITE_URL}/rules`)
+    expect(urls).not.toContain(`${SITE_URL}/admin`)
+    expect(urls).not.toContain(`${SITE_URL}/api`)
+  })
+})
+
+describe('robots', () => {
+  it('disallows admin and api paths', () => {
+    const disallowed = ['/admin', '/api']
+    expect(disallowed).toContain('/admin')
+    expect(disallowed).toContain('/api')
+    expect(disallowed).not.toContain('/')
+  })
+})

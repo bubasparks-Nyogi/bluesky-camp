@@ -32,7 +32,12 @@ export default function BookingCalendar() {
   }, [year, month])
 
   const days = getDaysInMonth(year, month)
-  const firstDow = new Date(year, month - 1, 1).getDay() // 0=日
+  const firstDow = new Date(year, month - 1, 1).getDay()
+  const todayIso = today.toISOString().slice(0, 10)
+
+  const handleDayClick = (iso: string) => {
+    router.push(`/reserve?date=${iso}`)
+  }
 
   const prev = () => {
     if (month === 1) { setYear(y => y - 1); setMonth(12) }
@@ -42,8 +47,6 @@ export default function BookingCalendar() {
     if (month === 12) { setYear(y => y + 1); setMonth(1) }
     else setMonth(m => m + 1)
   }
-
-  const todayIso = today.toISOString().slice(0, 10)
 
   return (
     <div className="max-w-sm mx-auto">
@@ -84,24 +87,37 @@ export default function BookingCalendar() {
             <div key={`empty-${i}`} />
           ))}
           {days.map(d => {
-            const iso  = d.toISOString().slice(0, 10)
-            const past = iso < todayIso
+            const iso      = d.toISOString().slice(0, 10)
+            const past     = iso < todayIso
             const isBooked = booked.has(iso)
+            const available = !past && !isBooked
+
+            if (available) {
+              return (
+                <button
+                  key={iso}
+                  onClick={() => handleDayClick(iso)}
+                  className="py-2 rounded text-xs font-medium transition-colors bg-warm-100 text-warm-600 hover:bg-warm-300 hover:text-white active:scale-95 cursor-pointer"
+                  aria-label={`${d.getMonth() + 1}月${d.getDate()}日 空き`}
+                >
+                  <div>{d.getDate()}</div>
+                  <div className="text-xs mt-0.5 font-bold">○</div>
+                </button>
+              )
+            }
+
             return (
               <div
                 key={iso}
                 className={[
-                  'py-2 rounded text-xs font-medium transition-colors',
-                  past    ? 'text-gray-300' : '',
+                  'py-2 rounded text-xs font-medium',
+                  past               ? 'text-gray-300' : '',
                   !past && isBooked  ? 'bg-red-100 text-red-400' : '',
-                  !past && !isBooked ? 'bg-warm-100 text-warm-600' : '',
                 ].join(' ')}
               >
                 <div>{d.getDate()}</div>
                 {!past && (
-                  <div className="text-xs mt-0.5 font-bold">
-                    {isBooked ? '×' : '○'}
-                  </div>
+                  <div className="text-xs mt-0.5 font-bold">×</div>
                 )}
               </div>
             )
@@ -121,7 +137,7 @@ export default function BookingCalendar() {
 
       {/* 凡例 */}
       <div className="flex justify-center gap-6 mt-3 text-xs text-warm-400">
-        <span><span className="text-warm-600 font-bold">○</span> 空き</span>
+        <span><span className="text-warm-600 font-bold">○</span> 空き（タップで予約）</span>
         <span><span className="text-red-400 font-bold">×</span> 満室</span>
       </div>
     </div>

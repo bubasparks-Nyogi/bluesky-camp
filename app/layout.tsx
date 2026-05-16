@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next'
 import { Noto_Serif_JP, Noto_Sans_JP } from 'next/font/google'
 import './globals.css'
 import JsonLd from '@/components/JsonLd'
+import { SITE_URL } from '@/lib/seo-constants'
 
 const notoSerif = Noto_Serif_JP({
   subsets: ['latin'],
@@ -15,8 +16,6 @@ const notoSans = Noto_Sans_JP({
   variable: '--font-sans',
   display: 'swap',
 })
-
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://bluesky-camp.vercel.app'
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),

@@ -1,6 +1,6 @@
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://bluesky-camp.vercel.app'
+import { SITE_URL } from '@/lib/seo-constants'
 
-const localBusiness = {
+export const localBusiness = {
   '@context': 'https://schema.org',
   '@type': 'LodgingBusiness',
   name: '@blueSky',

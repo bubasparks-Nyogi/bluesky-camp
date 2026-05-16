@@ -19,12 +19,28 @@ export async function POST(req: NextRequest) {
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const formData = await req.formData()
-  const file     = formData.get('file') as File | null
-  const section  = formData.get('section') as string | null
-  const caption  = formData.get('caption') as string | null
+  const fileEntry = formData.get('file')
+  const file      = fileEntry instanceof File ? fileEntry : null
+  const section   = formData.get('section') as string | null
+  const caption   = formData.get('caption') as string | null
 
   if (!file || !section) {
     return NextResponse.json({ error: 'file と section が必要です' }, { status: 400 })
+  }
+
+  const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
+  if (!ALLOWED_MIME_TYPES.includes(file.type)) {
+    return NextResponse.json({ error: '許可されていないファイル形式です。JPEG、PNG、WebP、GIF のみ使用できます' }, { status: 400 })
+  }
+
+  const MAX_FILE_SIZE = 10 * 1024 * 1024
+  if (file.size > MAX_FILE_SIZE) {
+    return NextResponse.json({ error: 'ファイルサイズは 10MB 以下にしてください' }, { status: 400 })
+  }
+
+  const ALLOWED_SECTIONS = ['hero', 'facilities']
+  if (!ALLOWED_SECTIONS.includes(section)) {
+    return NextResponse.json({ error: 'section は hero または facilities のみ使用できます' }, { status: 400 })
   }
 
   const ext      = file.name.split('.').pop()

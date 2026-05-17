@@ -23,6 +23,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
             { href: '/admin/blocked-dates', label: '🚫 日程ブロック' },
             { href: '/admin/photos',        label: '📸 写真管理' },
             { href: '/admin/faqs',          label: '❓ FAQ管理' },
+            { href: '/admin/reviews',       label: '⭐ レビュー管理' },
           ].map(item => (
             <Link key={item.href} href={item.href}
                   className="block px-5 py-2.5 text-sm hover:bg-warm-600 transition-colors">

@@ -8,6 +8,7 @@ import BookingCalendar from '@/components/home/BookingCalendar'
 import Access          from '@/components/home/Access'
 import Contact         from '@/components/home/Contact'
 import FaqSection      from '@/components/home/FaqSection'
+import ReviewSection    from '@/components/home/ReviewSection'
 import { supabaseAdmin } from '@/lib/supabase'
 
 async function getPhotos(section: 'hero' | 'facilities') {
@@ -47,6 +48,7 @@ export default async function HomePage() {
       </section>
       <Access />
       <FaqSection faqs={faqs} />
+      <ReviewSection />
       <Contact />
       <footer className="bg-warm-700 text-warm-300 text-center py-6 text-xs">
         <p>© 2026 @blueSky. All rights reserved.</p>

@@ -9,6 +9,7 @@ import Access          from '@/components/home/Access'
 import Contact         from '@/components/home/Contact'
 import FaqSection      from '@/components/home/FaqSection'
 import ReviewSection    from '@/components/home/ReviewSection'
+import NewsSection from '@/components/home/NewsSection'
 import { supabaseAdmin } from '@/lib/supabase'
 
 async function getPhotos(section: 'hero' | 'facilities') {
@@ -35,6 +36,7 @@ export default async function HomePage() {
   return (
     <main>
       <Hero photos={heroPhotos} />
+      <NewsSection />
       <Experience />
       <Facilities photos={facilityPhotos} />
       <Plan />

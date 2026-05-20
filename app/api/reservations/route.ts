@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
+import { createSupabaseServerClient } from '@/lib/supabase-server'
 import { createPaymentIntent } from '@/lib/payment'
 import { calcTotal } from '@/lib/pricing'
 import { sendReservationEmails } from '@/lib/email'
@@ -11,6 +12,9 @@ const stripeEnabled = !(process.env.STRIPE_SECRET_KEY ?? '').includes('placehold
 
 export async function POST(req: NextRequest) {
   const form: ReservationFormData = await req.json()
+
+  const supabaseAuth = createSupabaseServerClient()
+  const { data: { user } } = await supabaseAuth.auth.getUser()
 
   const { data: existing } = await supabaseAdmin
     .from('reservations')
@@ -37,7 +41,16 @@ export async function POST(req: NextRequest) {
     active:  p.active,
   }))
 
-  const totalAmount = calcTotal(form, pricing)
+  let isRepeater = false
+  if (user) {
+    const { count } = await supabaseAdmin
+      .from('reservations')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', user.id)
+    isRepeater = (count ?? 0) >= 1
+  }
+
+  const totalAmount = calcTotal(form, pricing, { isRepeater })
 
   let clientSecret:    string | null = null
   let paymentIntentId: string | null = null
@@ -77,6 +90,7 @@ export async function POST(req: NextRequest) {
       total_amount:       totalAmount,
       stripe_payment_id:  paymentIntentId,
       agreed_to_terms_at: new Date().toISOString(),
+      user_id:            user?.id ?? null,
     })
     .select()
     .single()

@@ -13,12 +13,17 @@ interface Props { form: ReservationFormData; onNext: () => void; onBack: () => v
 
 export default function StepConfirm({ form, onNext, onBack }: Props) {
   const [pricing, setPricing] = useState<PricingItem[]>([])
+  const [isRepeater, setIsRepeater] = useState(false)
   useEffect(() => {
     fetch('/api/pricing').then(r => r.json()).then(d => setPricing(d.pricing ?? []))
+    fetch('/api/repeater-status')
+      .then(r => r.json())
+      .then(d => setIsRepeater(!!d.isRepeater))
+      .catch(() => {})
   }, [])
 
   const breakdown = calcBreakdown(form, pricing)
-  const total     = calcTotal(form, pricing)
+  const total     = calcTotal(form, pricing, { isRepeater })
 
   return (
     <div>
@@ -58,6 +63,9 @@ export default function StepConfirm({ form, onNext, onBack }: Props) {
           <span>合計</span>
           <span className="text-lg">¥{total.toLocaleString()}</span>
         </div>
+        {isRepeater && (
+          <p className="text-green-600 text-sm mt-2">✨ リピーター割引 10% OFF 適用中</p>
+        )}
       </div>
       <div className="flex gap-3">
         <button onClick={onBack} className="flex-1 border border-warm-200 text-warm-500 font-bold py-3 rounded-lg text-base">← 戻る</button>

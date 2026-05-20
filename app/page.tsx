@@ -1,4 +1,6 @@
 // app/page.tsx
+export const revalidate = 60
+
 import Hero            from '@/components/home/Hero'
 import Experience      from '@/components/home/Experience'
 import Facilities      from '@/components/home/Facilities'

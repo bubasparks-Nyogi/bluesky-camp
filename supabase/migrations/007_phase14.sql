@@ -1,6 +1,6 @@
 -- supabase/migrations/007_phase14.sql
 
-CREATE TABLE profiles (
+CREATE TABLE IF NOT EXISTS profiles (
   id          uuid        PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
   display_name text,
   phone        text,
@@ -10,6 +10,11 @@ CREATE TABLE profiles (
 );
 
 ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "profiles_read_own"   ON profiles;
+DROP POLICY IF EXISTS "profiles_update_own" ON profiles;
+DROP POLICY IF EXISTS "profiles_insert_own" ON profiles;
+
 CREATE POLICY "profiles_read_own"   ON profiles FOR SELECT USING (auth.uid() = id);
 CREATE POLICY "profiles_update_own" ON profiles FOR UPDATE USING (auth.uid() = id);
 CREATE POLICY "profiles_insert_own" ON profiles FOR INSERT WITH CHECK (auth.uid() = id);
@@ -21,7 +26,7 @@ CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS trigger AS $$
 BEGIN
   INSERT INTO public.profiles (id) VALUES (NEW.id) ON CONFLICT DO NOTHING;
-  UPDATE public.reservations SET user_id = NEW.id WHERE email = NEW.email AND user_id IS NULL;
+  UPDATE public.reservations SET user_id = NEW.id WHERE guest_email = NEW.email AND user_id IS NULL;
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;

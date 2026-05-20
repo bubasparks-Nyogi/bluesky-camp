@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next'
 import { Noto_Serif_JP, Noto_Sans_JP } from 'next/font/google'
 import './globals.css'
 import JsonLd from '@/components/JsonLd'
+import AuthNav from '@/components/AuthNav'
 import { SITE_URL } from '@/lib/seo-constants'
 
 const notoSerif = Noto_Serif_JP({
@@ -67,6 +68,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="ja" className={`${notoSerif.variable} ${notoSans.variable}`}>
       <body className="font-sans bg-warm-50 text-warm-700">
         <JsonLd />
+        <div className="fixed top-4 right-4 z-50">
+          <AuthNav />
+        </div>
         {children}
       </body>
     </html>

@@ -1,6 +1,8 @@
 import Link from 'next/link'
 import { supabaseAdmin } from '@/lib/supabase'
 
+export const revalidate = 60
+
 const VALID_CATEGORIES = ['news', 'event', 'blog']
 const CATEGORY_LABEL: Record<string, string> = {
   news:  'お知らせ',

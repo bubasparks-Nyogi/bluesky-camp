@@ -24,6 +24,7 @@ function stayTypeKey(stayType: string): string {
 export function calcTotal(
   form: ReservationFormData,
   pricing: PricingItem[],
+  options: { isRepeater?: boolean } = {},
 ): number {
   const get = (key: string) =>
     pricing.find(p => p.itemKey === key && p.active)?.amount ?? 0
@@ -43,6 +44,12 @@ export function calcTotal(
   for (const item of form.rentalItems) {
     total += item.price * item.qty
   }
+
+  // リピーター割引 10%（Phase 14）
+  if (options.isRepeater === true) {
+    total = Math.floor(total * 0.9)
+  }
+
   return total
 }
 

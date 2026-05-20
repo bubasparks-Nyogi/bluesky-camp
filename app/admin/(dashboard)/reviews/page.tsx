@@ -1,18 +1,27 @@
 import { supabaseAdmin } from '@/lib/supabase'
 import ReviewManager from '@/components/admin/ReviewManager'
+import ReviewFilters from '@/components/admin/ReviewFilters'
 
-async function getAllReviews() {
-  const { data } = await supabaseAdmin
-    .from('reviews')
-    .select('*')
-    .order('created_at', { ascending: false })
-  return data ?? []
+interface Props {
+  searchParams: { q?: string; publish?: string }
 }
 
-export default async function AdminReviewsPage() {
-  const reviews = await getAllReviews()
-  const pending   = reviews.filter(r => !r.is_published).length
-  const published = reviews.filter(r =>  r.is_published).length
+export default async function AdminReviewsPage({ searchParams }: Props) {
+  let query = supabaseAdmin.from('reviews').select('*').order('created_at', { ascending: false })
+
+  if (searchParams.q) {
+    const pat = `%${searchParams.q}%`
+    query = query.or(`guest_name.ilike.${pat},comment.ilike.${pat}`)
+  }
+  if (searchParams.publish === 'published')   query = query.eq('is_published', true)
+  if (searchParams.publish === 'unpublished') query = query.eq('is_published', false)
+
+  const { data: reviews } = await query
+  const reviewList = reviews ?? []
+  const pending   = reviewList.filter(r => !r.is_published).length
+  const published = reviewList.filter(r =>  r.is_published).length
+
+  const { count: totalCount } = await supabaseAdmin.from('reviews').select('*', { count: 'exact', head: true })
 
   return (
     <div>
@@ -23,7 +32,8 @@ export default async function AdminReviewsPage() {
           <span>公開中: <strong className="text-green-600">{published}</strong></span>
         </div>
       </div>
-      <ReviewManager initialReviews={reviews} />
+      <ReviewFilters totalCount={totalCount ?? 0} visibleCount={reviewList.length} />
+      <ReviewManager initialReviews={reviewList} />
     </div>
   )
 }

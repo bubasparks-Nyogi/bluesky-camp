@@ -1,17 +1,25 @@
 import Link from 'next/link'
 import { supabaseAdmin } from '@/lib/supabase'
 import PostManager from '@/components/admin/PostManager'
+import PostFilters from '@/components/admin/PostFilters'
 
-async function getAllPosts() {
-  const { data } = await supabaseAdmin
+interface Props {
+  searchParams: { q?: string; category?: string; publish?: string }
+}
+
+export default async function AdminPostsPage({ searchParams }: Props) {
+  let query = supabaseAdmin
     .from('posts')
     .select('id, slug, title, category, is_published, published_at, created_at')
     .order('created_at', { ascending: false })
-  return data ?? []
-}
 
-export default async function AdminPostsPage() {
-  const posts = await getAllPosts()
+  if (searchParams.q) query = query.ilike('title', `%${searchParams.q}%`)
+  if (searchParams.category && searchParams.category !== 'all') query = query.eq('category', searchParams.category)
+  if (searchParams.publish === 'published')   query = query.eq('is_published', true)
+  if (searchParams.publish === 'unpublished') query = query.eq('is_published', false)
+
+  const { data: posts } = await query
+  const { count: totalCount } = await supabaseAdmin.from('posts').select('*', { count: 'exact', head: true })
 
   return (
     <div>
@@ -24,7 +32,8 @@ export default async function AdminPostsPage() {
           + 新規作成
         </Link>
       </div>
-      <PostManager initialPosts={posts} />
+      <PostFilters totalCount={totalCount ?? 0} visibleCount={posts?.length ?? 0} />
+      <PostManager initialPosts={posts ?? []} />
     </div>
   )
 }

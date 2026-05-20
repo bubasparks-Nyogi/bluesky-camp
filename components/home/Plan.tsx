@@ -2,9 +2,9 @@ import { supabase } from '@/lib/supabase'
 
 export default async function Plan() {
   const { data: pricing } = await supabase
-    .from('pricing').select('*').eq('active', true).order('amount', { ascending: false })
+    .from('pricing').select('item_key, label, amount').eq('active', true).order('amount', { ascending: false })
   const { data: rentals } = await supabase
-    .from('rental_items').select('*').eq('available', true)
+    .from('rental_items').select('id, name, price_per_day').eq('available', true)
 
   return (
     <section id="plan" className="py-20 px-4 bg-warm-50">

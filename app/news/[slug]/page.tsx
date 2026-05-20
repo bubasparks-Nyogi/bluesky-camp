@@ -17,7 +17,7 @@ const CATEGORY_LABEL: Record<string, string> = {
 async function getPost(slug: string) {
   const { data } = await supabaseAdmin
     .from('posts')
-    .select('*')
+    .select('slug, title, excerpt, cover_image, category, published_at, body')
     .eq('slug', slug)
     .eq('is_published', true)
     .maybeSingle()

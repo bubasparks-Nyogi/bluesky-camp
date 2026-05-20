@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import Image from 'next/image'
 import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
 import { supabaseAdmin } from '@/lib/supabase'
@@ -73,7 +74,9 @@ export default async function PostPage({ params }: Props) {
         <h1 className="font-serif text-3xl text-warm-700 mb-6">{post.title}</h1>
 
         {post.cover_image && (
-          <img src={post.cover_image} alt={post.title} className="w-full rounded-xl mb-8" />
+          <div className="relative w-full aspect-[16/9] rounded-xl overflow-hidden mb-8">
+            <Image src={post.cover_image} alt={post.title} fill className="object-cover" sizes="(max-width: 768px) 100vw, 768px" priority />
+          </div>
         )}
 
         <PostBody markdown={post.body} />

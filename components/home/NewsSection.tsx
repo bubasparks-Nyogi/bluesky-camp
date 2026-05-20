@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import Image from 'next/image'
 import { supabaseAdmin } from '@/lib/supabase'
 
 interface PostListItem {
@@ -47,7 +48,9 @@ export default async function NewsSection() {
               className="bg-white rounded-xl border border-warm-100 overflow-hidden hover:shadow-md transition-shadow flex flex-col"
             >
               {p.cover_image && (
-                <img src={p.cover_image} alt={p.title} className="w-full h-40 object-cover" />
+                <div className="relative w-full h-40">
+                  <Image src={p.cover_image} alt={p.title} fill className="object-cover" sizes="(max-width: 768px) 100vw, 33vw" />
+                </div>
               )}
               <div className="p-5 flex-1 flex flex-col">
                 <div className="flex items-center gap-2 mb-2">

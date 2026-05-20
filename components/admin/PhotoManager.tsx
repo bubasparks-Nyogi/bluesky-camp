@@ -1,6 +1,7 @@
 // components/admin/PhotoManager.tsx
 'use client'
 import { useState, useRef } from 'react'
+import Image from 'next/image'
 
 interface Photo {
   id:         string
@@ -83,7 +84,9 @@ export default function PhotoManager({ initialPhotos }: Props) {
     <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mt-3">
       {items.sort((a, b) => a.sort_order - b.sort_order).map((photo, i) => (
         <div key={photo.id} className="relative group rounded-lg overflow-hidden border border-warm-200 bg-warm-50">
-          <img src={photo.url} alt={photo.caption ?? ''} className="w-full h-32 object-cover" />
+          <div className="relative w-full h-32">
+            <Image src={photo.url} alt={photo.caption ?? ''} fill className="object-cover" sizes="(max-width: 640px) 50vw, 33vw" />
+          </div>
           <div className="p-2">
             <p className="text-xs text-warm-500 truncate">{photo.caption ?? '(キャプションなし)'}</p>
             <div className="flex gap-1 mt-1">

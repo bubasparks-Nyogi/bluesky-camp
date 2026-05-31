@@ -7,6 +7,7 @@ import type { Account, OpeningBalance } from '@/lib/accounting/types'
 export const revalidate = 0
 
 const LINKS = [
+  { href: '/admin/accounting/reservation-posting', label: '予約売上計上', icon: '💰' },
   { href: '/admin/accounting/journal',        label: '仕訳帳',         icon: '📒' },
   { href: '/admin/accounting/ledger',         label: '総勘定元帳',     icon: '📚' },
   { href: '/admin/accounting/trial-balance',  label: '試算表',         icon: '⚖️' },

@@ -41,6 +41,8 @@ export default function ReservationEditForm({ reservation: init, pricing }: Prop
     guest_phone:      init.guest_phone,
     total_amount:     init.total_amount,
     status:           init.status,
+    payment_method:   (init as { payment_method?: string }).payment_method ?? '',
+    paid_at:          (init as { paid_at?: string }).paid_at ?? '',
     manualAmount:     false as boolean,   // true のとき自動再計算しない
   })
   const [saving,  setSaving]  = useState(false)
@@ -93,11 +95,20 @@ export default function ReservationEditForm({ reservation: init, pricing }: Prop
         stay_type: form.stay_types[0] ?? 'tent',  // 後方互換
       }),
     })
-    setSaving(false)
     if (res.ok) {
+      await fetch(`/api/admin/reservations/${init.id}/payment`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          payment_method: form.payment_method || null,
+          paid_at:        form.payment_method === 'prepaid' ? (form.paid_at || null) : null,
+        }),
+      })
+      setSaving(false)
       setMessage('保存しました')
       setTimeout(() => router.push('/admin/reservations'), 1000)
     } else {
+      setSaving(false)
       const d = await res.json()
       setMessage(`保存に失敗しました: ${d.error}`)
     }
@@ -229,6 +240,30 @@ export default function ReservationEditForm({ reservation: init, pricing }: Prop
               ))}
             </select>
           </div>
+          <div>
+            <label className="block text-sm text-warm-500 mb-1">支払方法</label>
+            <select
+              value={form.payment_method}
+              onChange={e => setForm({ ...form, payment_method: e.target.value })}
+              className="w-full border border-warm-200 rounded-lg px-3 py-2 text-sm"
+            >
+              <option value="">未設定</option>
+              <option value="onsite">現地払い</option>
+              <option value="prepaid">事前振込</option>
+            </select>
+          </div>
+          {form.payment_method === 'prepaid' && (
+            <div>
+              <label className="block text-sm text-warm-500 mb-1">入金日</label>
+              <input
+                type="date"
+                value={form.paid_at}
+                onChange={e => setForm({ ...form, paid_at: e.target.value })}
+                className="w-full border border-warm-200 rounded-lg px-3 py-2 text-sm"
+              />
+              <p className="text-warm-300 text-xs mt-1">入金日を保存すると前受金の仕訳が自動計上されます。</p>
+            </div>
+          )}
         </div>
       </section>
 

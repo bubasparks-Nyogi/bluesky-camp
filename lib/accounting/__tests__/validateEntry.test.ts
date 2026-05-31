@@ -47,4 +47,11 @@ describe('validateEntry', () => {
       { accountId: 'b', side: 'credit', amount: 9000 },
     ]))).toBe('借方と貸方の合計が一致しません（借方 ¥10,000 / 貸方 ¥9,000）')
   })
+
+  it('rejects a line with missing accountId', () => {
+    expect(validateEntry(base([
+      { accountId: '', side: 'debit',  amount: 10000 },
+      { accountId: 'b', side: 'credit', amount: 10000 },
+    ]))).toBe('勘定科目を選択してください')
+  })
 })

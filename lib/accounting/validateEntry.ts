@@ -6,6 +6,9 @@ export function validateEntry(entry: JournalEntryInput): string | null {
     return '明細は2件以上必要です'
   }
   for (const line of lines) {
+    if (!line.accountId || typeof line.accountId !== 'string' || line.accountId.trim().length === 0) {
+      return '勘定科目を選択してください'
+    }
     if (!Number.isInteger(line.amount) || line.amount <= 0) {
       return '金額は正の整数で入力してください'
     }

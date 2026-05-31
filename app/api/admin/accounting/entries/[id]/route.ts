@@ -33,12 +33,26 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     .eq('id', params.id)
   if (upErr) return NextResponse.json({ error: upErr.message }, { status: 500 })
 
+  // 既存明細を退避してから入れ替え（再挿入失敗時に復元してデータ破損を防ぐ）
+  const { data: oldLines } = await supabaseAdmin
+    .from('journal_lines').select('account_id, side, amount, line_order, tax_category')
+    .eq('journal_entry_id', params.id)
+
   await supabaseAdmin.from('journal_lines').delete().eq('journal_entry_id', params.id)
+
   const lines = body.lines.map((l, i) => ({
     journal_entry_id: params.id, account_id: l.accountId, side: l.side, amount: l.amount, line_order: i,
   }))
   const { error: linesErr } = await supabaseAdmin.from('journal_lines').insert(lines)
-  if (linesErr) return NextResponse.json({ error: linesErr.message }, { status: 500 })
+  if (linesErr) {
+    // 復元（退避した明細を戻す）
+    if (oldLines && oldLines.length > 0) {
+      await supabaseAdmin.from('journal_lines').insert(
+        oldLines.map(l => ({ ...l, journal_entry_id: params.id }))
+      )
+    }
+    return NextResponse.json({ error: linesErr.message }, { status: 500 })
+  }
   return NextResponse.json({ ok: true })
 }
 

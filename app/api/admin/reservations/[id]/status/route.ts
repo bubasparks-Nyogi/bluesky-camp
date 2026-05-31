@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 import { createSupabaseServerClient } from '@/lib/supabase-server'
+import { postCancellationEntry } from '@/lib/accounting/cancelHook'
 
 export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
   const supabase = createSupabaseServerClient()
@@ -13,5 +14,10 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
 
   const { error } = await supabaseAdmin.from('reservations').update({ status }).eq('id', params.id)
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+
+  if (status === 'cancelled') {
+    postCancellationEntry(params.id).catch(console.error)
+  }
+
   return NextResponse.json({ ok: true })
 }

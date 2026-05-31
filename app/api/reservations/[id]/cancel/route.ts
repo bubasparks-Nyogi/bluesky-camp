@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 import { calcCancellationFee } from '@/lib/cancellation'
 import { sendCancellationEmails } from '@/lib/email'
+import { postCancellationEntry } from '@/lib/accounting/cancelHook'
 
 export async function POST(
   req: NextRequest,
@@ -49,6 +50,9 @@ export async function POST(
 
   // メール送信（ベストエフォート：失敗しても処理は成功扱い）
   sendCancellationEmails(reservation, feeResult).catch(console.error)
+
+  // 会計仕訳（best-effort）
+  postCancellationEntry(params.id).catch(console.error)
 
   return NextResponse.json({
     ok:  true,

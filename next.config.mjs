@@ -6,6 +6,11 @@ const nextConfig = {
       { protocol: 'https', hostname: 'frdiafkdjeaslhwlvfxa.supabase.co' },
     ],
   },
+  experimental: {
+    outputFileTracingIncludes: {
+      '/admin/manual': ['./docs/operations-manual.md'],
+    },
+  },
 };
 
 export default nextConfig;

@@ -39,7 +39,8 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     }
     const result = await postReservationEntry(reservation, 'prepayment', { paidAt: r.paid_at })
     if (result.status === 'error')
-      return NextResponse.json({ error: `前受金仕訳の生成に失敗: ${result.error}` }, { status: 500 })
+      // 予約情報は保存済み。仕訳生成のみ失敗（冪等なので後から再実行で復旧可能）→ 部分成功として通知
+      return NextResponse.json({ ok: true, postingError: result.error }, { status: 200 })
   }
   return NextResponse.json({ ok: true })
 }

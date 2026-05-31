@@ -2,6 +2,7 @@ import { supabaseAdmin } from '@/lib/supabase'
 import { validateEntry } from './validateEntry'
 import {
   buildReservationEntry,
+  REQUIRED_ACCOUNT_CODES,
   type ReservationForPosting,
   type PostingPhase,
   type AccountCodeMap,
@@ -15,7 +16,8 @@ export interface PostResult {
 
 /** accounts テーブルから コード→ID マップを構築 */
 async function buildAccountMap(): Promise<AccountCodeMap> {
-  const { data } = await supabaseAdmin.from('accounts').select('id, code')
+  const { data, error } = await supabaseAdmin.from('accounts').select('id, code')
+  if (error) throw new Error(`勘定科目の取得に失敗しました: ${error.message}`)
   const map: AccountCodeMap = {}
   for (const a of data ?? []) map[a.code] = a.id
   return map
@@ -40,9 +42,14 @@ export async function postReservationEntry(
     .maybeSingle()
   if (existing) return { status: 'skipped' }
 
-  const accountMap = await buildAccountMap()
+  let accountMap: AccountCodeMap
+  try {
+    accountMap = await buildAccountMap()
+  } catch (e) {
+    return { status: 'error', error: e instanceof Error ? e.message : '勘定科目の取得に失敗しました' }
+  }
 
-  const required = ['101', '102', '103', '203', '401', '402']
+  const required = REQUIRED_ACCOUNT_CODES
   for (const code of required) {
     if (!accountMap[code]) {
       return { status: 'error', error: `必要な勘定科目（コード${code}）が見つかりません` }

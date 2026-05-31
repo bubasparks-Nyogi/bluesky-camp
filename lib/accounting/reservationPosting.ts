@@ -19,6 +19,8 @@ const CODE = {
   advance: '203', sales: '401', misc: '402',
 } as const
 
+export const REQUIRED_ACCOUNT_CODES: string[] = Object.values(CODE)
+
 interface BuildOpts {
   paidAt?: string
   cancelledAt?: string

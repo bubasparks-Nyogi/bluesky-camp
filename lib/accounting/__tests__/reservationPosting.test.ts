@@ -92,6 +92,27 @@ describe('buildReservationEntry - cancellation', () => {
   })
 })
 
+describe('buildReservationEntry - robustness', () => {
+  const prepaidR: ReservationForPosting = {
+    id: 'r1', totalAmount: 20000, paymentMethod: 'prepaid',
+    checkinDate: '2026-03-10', checkoutDate: '2026-03-11',
+  }
+  it('throws when a required account code is missing from the map', () => {
+    const incomplete: AccountCodeMap = { '101': 'id-cash' } // missing 102/203 etc.
+    expect(() => buildReservationEntry(prepaidR, 'prepayment', incomplete, { paidAt: '2026-02-20' }))
+      .toThrow()
+  })
+  it('clamps cancellation fee above totalAmount so the entry stays balanced', () => {
+    const e = buildReservationEntry(prepaidR, 'cancellation', MAP, { cancelledAt: '2026-03-05', fee: 999999 })!
+    // fee clamped to 20000 → 借 前受金 20000 / 貸 雑収入 20000, no refund line
+    expect(e.lines).toEqual([
+      { accountId: 'id-advance', side: 'debit',  amount: 20000 },
+      { accountId: 'id-misc',    side: 'credit', amount: 20000 },
+    ])
+    expect(validateEntry(e)).toBeNull()
+  })
+})
+
 describe('filterPostableReservations', () => {
   const base = {
     total_amount: 10000, payment_method: 'onsite', checkin_date: '2026-03-01',

@@ -31,7 +31,11 @@ export function buildReservationEntry(
   accountMap: AccountCodeMap,
   opts: BuildOpts = {},
 ): JournalEntryInput | null {
-  const acc = (code: string) => accountMap[code]
+  const acc = (code: string) => {
+    const id = accountMap[code]
+    if (!id) throw new Error(`勘定科目コード${code}が見つかりません`)
+    return id
+  }
   const line = (code: string, side: 'debit' | 'credit', amount: number): JournalLineInput =>
     ({ accountId: acc(code), side, amount })
 
@@ -60,7 +64,8 @@ export function buildReservationEntry(
   }
 
   // cancellation
-  const fee = opts.fee ?? 0
+  const rawFee = opts.fee ?? 0
+  const fee = Math.max(0, Math.min(rawFee, r.totalAmount))
   const entryDate = opts.cancelledAt ?? r.checkoutDate
   const description = `キャンセル 予約${r.id}`
 

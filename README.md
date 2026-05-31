@@ -149,6 +149,7 @@ npx vercel --prod         # 手動デプロイ
 
 ## サポートドキュメント
 
+- [📘 運用手順書（責任者向け・正式運用マニュアル）](docs/operations-manual.md)
 - [カスタムドメイン設定ガイド](docs/custom-domain-guide.md)
 - [Phase 別実装プラン](docs/superpowers/plans/) — 全 16 Phase の設計と実装履歴
 - [仕様書](docs/superpowers/specs/) — 各機能のスペック

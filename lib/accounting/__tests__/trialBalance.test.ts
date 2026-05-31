@@ -45,4 +45,24 @@ describe('computeTrialBalance', () => {
     const result = computeTrialBalance([cash, expense], lines, [])
     expect(result.balanced).toBe(false)
   })
+
+  it('counts orphan lines (account not in list) in totals so imbalance is caught', () => {
+    const lines: PostedLine[] = [
+      { accountId: 'cash',    side: 'debit',  amount: 10000 },
+      { accountId: 'missing', side: 'credit', amount: 10000 },  // account not in accounts[]
+    ]
+    const result = computeTrialBalance([cash], lines, [])
+    expect(result.totalDebit).toBe(10000)
+    expect(result.totalCredit).toBe(10000)
+    expect(result.balanced).toBe(true)
+  })
+
+  it('flags imbalance even when an orphan line would otherwise hide it', () => {
+    const lines: PostedLine[] = [
+      { accountId: 'cash',    side: 'debit',  amount: 10000 },
+      { accountId: 'missing', side: 'credit', amount: 7000 },
+    ]
+    const result = computeTrialBalance([cash], lines, [])
+    expect(result.balanced).toBe(false)
+  })
 })

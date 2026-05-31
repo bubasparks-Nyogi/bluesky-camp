@@ -49,8 +49,12 @@ export function computeTrialBalance(
     return { account, debitTotal, creditTotal, balance }
   })
 
-  const totalDebit  = rows.reduce((s, r) => s + r.debitTotal, 0)
-  const totalCredit = rows.reduce((s, r) => s + r.creditTotal, 0)
+  const sumSide = (side: Side) =>
+    openingBalances.filter(o => o.side === side).reduce((s, o) => s + o.amount, 0) +
+    lines.filter(l => l.side === side).reduce((s, l) => s + l.amount, 0)
+
+  const totalDebit  = sumSide('debit')
+  const totalCredit = sumSide('credit')
 
   return { rows, totalDebit, totalCredit, balanced: totalDebit === totalCredit }
 }

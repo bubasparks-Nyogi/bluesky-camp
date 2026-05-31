@@ -25,6 +25,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
             { href: '/admin/faqs',          label: '❓ FAQ管理' },
             { href: '/admin/reviews',       label: '⭐ レビュー管理' },
             { href: '/admin/posts',         label: '📝 投稿管理' },
+            { href: '/admin/accounting',    label: '🧮 会計' },
             { href: '/admin/manual',        label: '📘 運用手順書' },
           ].map(item => (
             <Link key={item.href} href={item.href}

@@ -96,7 +96,7 @@ export default function ReservationEditForm({ reservation: init, pricing }: Prop
       }),
     })
     if (res.ok) {
-      await fetch(`/api/admin/reservations/${init.id}/payment`, {
+      const payRes = await fetch(`/api/admin/reservations/${init.id}/payment`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -104,6 +104,17 @@ export default function ReservationEditForm({ reservation: init, pricing }: Prop
           paid_at:        form.payment_method === 'prepaid' ? (form.paid_at || null) : null,
         }),
       })
+      const payJson = await payRes.json().catch(() => ({}))
+      if (!payRes.ok) {
+        setSaving(false)
+        setMessage(`支払情報の保存に失敗しました: ${payJson.error ?? ''}`)
+        return
+      }
+      if (payJson.postingError) {
+        setSaving(false)
+        setMessage(`保存しました（注意：前受金仕訳の自動生成に失敗 → ${payJson.postingError}。会計画面で確認してください）`)
+        return
+      }
       setSaving(false)
       setMessage('保存しました')
       setTimeout(() => router.push('/admin/reservations'), 1000)

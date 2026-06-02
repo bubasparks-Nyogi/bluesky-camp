@@ -49,3 +49,36 @@ describe('parseOcrResult', () => {
     expect(parseOcrResult(JSON.stringify({ vendor: 'X' }), CODES).amount).toBe(0)
   })
 })
+
+import { buildExpenseEntry } from '../ocrReceipt'
+import { validateEntry } from '../validateEntry'
+
+describe('buildExpenseEntry', () => {
+  const base = {
+    date: '2026-03-15', amount: 1200, description: 'コメリ',
+    debitAccountId: 'acc-exp', creditAccountId: 'acc-cash',
+  }
+  it('builds a balanced expense entry that passes validateEntry', () => {
+    const e = buildExpenseEntry(base)
+    expect(e.entryDate).toBe('2026-03-15')
+    expect(e.description).toBe('コメリ')
+    expect(e.lines).toEqual([
+      { accountId: 'acc-exp',  side: 'debit',  amount: 1200 },
+      { accountId: 'acc-cash', side: 'credit', amount: 1200 },
+    ])
+    expect(validateEntry(e)).toBeNull()
+  })
+  it('defaults blank description to 経費', () => {
+    expect(buildExpenseEntry({ ...base, description: '' }).description).toBe('経費')
+  })
+  it('throws on non-positive amount', () => {
+    expect(() => buildExpenseEntry({ ...base, amount: 0 })).toThrow()
+    expect(() => buildExpenseEntry({ ...base, amount: -5 })).toThrow()
+  })
+  it('throws on non-integer amount', () => {
+    expect(() => buildExpenseEntry({ ...base, amount: 12.5 })).toThrow()
+  })
+  it('throws when debit and credit accounts are the same', () => {
+    expect(() => buildExpenseEntry({ ...base, creditAccountId: 'acc-exp' })).toThrow()
+  })
+})

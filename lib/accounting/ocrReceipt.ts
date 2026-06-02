@@ -65,3 +65,20 @@ export function parseOcrResult(raw: string, validExpenseCodes: string[]): OcrDra
 
   return { date, amount, vendor, suggestedAccountCode, confidence }
 }
+
+export function buildExpenseEntry(input: ExpenseInput): JournalEntryInput {
+  if (!Number.isInteger(input.amount) || input.amount <= 0) {
+    throw new Error('金額は正の整数で入力してください')
+  }
+  if (input.debitAccountId === input.creditAccountId) {
+    throw new Error('借方と貸方に同じ科目は指定できません')
+  }
+  return {
+    entryDate: input.date,
+    description: input.description || '経費',
+    lines: [
+      { accountId: input.debitAccountId,  side: 'debit',  amount: input.amount },
+      { accountId: input.creditAccountId, side: 'credit', amount: input.amount },
+    ],
+  }
+}

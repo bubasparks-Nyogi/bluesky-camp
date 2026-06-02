@@ -1,11 +1,12 @@
 import Link from 'next/link'
 import { supabaseAdmin } from '@/lib/supabase'
 import JournalEntryForm from '@/components/admin/accounting/JournalEntryForm'
+import ReceiptLink from '@/components/admin/accounting/ReceiptLink'
 
 export const revalidate = 0
 
 interface Line { id: string; account_id: string; side: string; amount: number }
-interface Entry { id: string; entry_date: string; description: string; journal_lines: Line[] }
+interface Entry { id: string; entry_date: string; description: string; receipt_url?: string | null; journal_lines: Line[] }
 
 export default async function JournalPage() {
   const { data: accounts } = await supabaseAdmin
@@ -29,7 +30,10 @@ export default async function JournalPage() {
           <div key={e.id} className="bg-white border border-warm-100 rounded-xl p-4">
             <div className="flex justify-between text-sm mb-2">
               <span className="text-warm-500">{e.entry_date}</span>
-              <span className="text-warm-700">{e.description}</span>
+              <span className="flex items-center gap-2 text-warm-700">
+                {e.description}
+                {e.receipt_url && <ReceiptLink path={e.receipt_url} />}
+              </span>
             </div>
             <table className="w-full text-sm">
               <tbody>

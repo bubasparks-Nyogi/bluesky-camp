@@ -4,8 +4,8 @@ import { createSupabaseServerClient } from '@/lib/supabase-server'
 
 export async function GET(req: NextRequest) {
   const supabase = createSupabaseServerClient()
-  const { data: { session } } = await supabase.auth.getSession()
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const year = Number(req.nextUrl.searchParams.get('year')) || new Date().getFullYear()
   const { data, error } = await supabaseAdmin
@@ -16,8 +16,8 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   const supabase = createSupabaseServerClient()
-  const { data: { session } } = await supabase.auth.getSession()
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   let body: Record<string, unknown>
   try { body = await req.json() } catch {

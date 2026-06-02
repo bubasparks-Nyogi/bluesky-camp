@@ -6,8 +6,8 @@ import type { JournalEntryInput } from '@/lib/accounting/types'
 
 export async function GET(req: NextRequest) {
   const supabase = createSupabaseServerClient()
-  const { data: { session } } = await supabase.auth.getSession()
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const from = req.nextUrl.searchParams.get('from')
   const to   = req.nextUrl.searchParams.get('to')
@@ -26,8 +26,8 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   const supabase = createSupabaseServerClient()
-  const { data: { session } } = await supabase.auth.getSession()
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   let body: JournalEntryInput
   try { body = await req.json() } catch {

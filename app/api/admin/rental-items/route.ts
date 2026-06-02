@@ -4,8 +4,8 @@ import { createSupabaseServerClient } from '@/lib/supabase-server'
 
 export async function POST(req: NextRequest) {
   const supabase = createSupabaseServerClient()
-  const { data: { session } } = await supabase.auth.getSession()
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const { name, price_per_day } = await req.json()
   if (!name || !price_per_day) return NextResponse.json({ error: '名前と料金が必要です' }, { status: 400 })

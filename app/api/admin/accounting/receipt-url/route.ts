@@ -4,8 +4,8 @@ import { createSupabaseServerClient } from '@/lib/supabase-server'
 
 export async function GET(req: NextRequest) {
   const supabase = createSupabaseServerClient()
-  const { data: { session } } = await supabase.auth.getSession()
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const path = req.nextUrl.searchParams.get('path')
   if (!path) return NextResponse.json({ error: 'path が必要です' }, { status: 400 })

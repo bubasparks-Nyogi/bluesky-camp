@@ -7,8 +7,8 @@ const VALID_SIDES = ['debit', 'credit']
 
 export async function GET() {
   const supabase = createSupabaseServerClient()
-  const { data: { session } } = await supabase.auth.getSession()
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const { data, error } = await supabaseAdmin
     .from('accounts').select('*').order('sort_order').order('code')
@@ -18,8 +18,8 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
   const supabase = createSupabaseServerClient()
-  const { data: { session } } = await supabase.auth.getSession()
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   let body: Record<string, unknown>
   try { body = await req.json() } catch {

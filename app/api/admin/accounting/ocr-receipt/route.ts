@@ -7,8 +7,8 @@ import { OCR_MODEL, OCR_MAX_IMAGE_BYTES } from '@/lib/ocrConfig'
 
 export async function POST(req: NextRequest) {
   const supabase = createSupabaseServerClient()
-  const { data: { session } } = await supabase.auth.getSession()
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const apiKey = process.env.ANTHROPIC_API_KEY
   if (!apiKey) return NextResponse.json({ error: 'OCRは未設定です。手入力をご利用ください' }, { status: 400 })

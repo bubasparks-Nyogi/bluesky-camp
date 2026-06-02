@@ -5,8 +5,8 @@ import { postCancellationEntry } from '@/lib/accounting/cancelHook'
 
 export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
   const supabase = createSupabaseServerClient()
-  const { data: { session } } = await supabase.auth.getSession()
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const { status } = await req.json()
   if (!['confirmed', 'cancelled', 'pending'].includes(status))

@@ -6,8 +6,8 @@ import type { ReservationForPosting, PaymentMethod } from '@/lib/accounting/rese
 
 export async function POST(req: NextRequest) {
   const supabase = createSupabaseServerClient()
-  const { data: { session } } = await supabase.auth.getSession()
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   let body: { reservationId?: string; phase?: 'prepayment' | 'revenue' }
   try { body = await req.json() } catch {

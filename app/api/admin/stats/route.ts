@@ -9,8 +9,8 @@ import { createSupabaseServerClient } from '@/lib/supabase-server'
  */
 export async function GET(req: NextRequest) {
   const supabase = createSupabaseServerClient()
-  const { data: { session } } = await supabase.auth.getSession()
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const { searchParams } = new URL(req.url)
   const month = searchParams.get('month') // 'YYYY-MM'

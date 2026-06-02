@@ -13,6 +13,7 @@
     "test:e2e:install": "playwright install chromium"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.100.1",
     "@react-email/components": "^1.0.12",
     "@stripe/react-stripe-js": "^6.3.0",
     "@stripe/stripe-js": "^9.4.0",

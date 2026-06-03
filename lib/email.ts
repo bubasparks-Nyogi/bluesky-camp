@@ -1,6 +1,6 @@
 // lib/email.ts
-import { Resend } from 'resend'
 import { render } from '@react-email/components'
+import { sendMail } from '@/lib/mailer'
 import ReservationConfirm  from '@/emails/ReservationConfirm'
 import ReservationNotify   from '@/emails/ReservationNotify'
 import CancellationConfirm from '@/emails/CancellationConfirm'
@@ -8,8 +8,6 @@ import CancellationNotify  from '@/emails/CancellationNotify'
 import type { CancellationFeeResult } from '@/lib/cancellation'
 import { getWeatherForecast } from '@/lib/weather'
 
-const resend    = new Resend(process.env.RESEND_API_KEY!)
-const FROM      = process.env.RESEND_FROM_EMAIL!
 const OWNER     = process.env.OWNER_EMAIL!
 const SITE      = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000'
 const ADMIN_URL = `${SITE}/admin/reservations`
@@ -92,14 +90,12 @@ export async function sendReservationEmails(
   ])
 
   await Promise.all([
-    resend.emails.send({
-      from:    FROM,
+    sendMail({
       to:      r.guest_email,
       subject,
       html:    guestHtml,
     }),
-    resend.emails.send({
-      from:    FROM,
+    sendMail({
       to:      OWNER,
       subject: `【新規予約】${shortId} - ${r.guest_name} 様`,
       html:    ownerHtml,
@@ -133,8 +129,7 @@ export async function sendReservationConfirmedEmail(
     status:          'confirmed',
   }))
 
-  await resend.emails.send({
-    from:    FROM,
+  await sendMail({
     to:      r.guest_email,
     subject: `【@blueSky】ご予約確定 - ${shortId}`,
     html:    guestHtml,
@@ -183,14 +178,12 @@ export async function sendCancellationEmails(
   ])
 
   await Promise.all([
-    resend.emails.send({
-      from:    FROM,
+    sendMail({
       to:      r.guest_email,
       subject: `【@blueSky】キャンセル受付 - ${shortId}`,
       html:    guestHtml,
     }),
-    resend.emails.send({
-      from:    FROM,
+    sendMail({
       to:      OWNER,
       subject: `【キャンセル】${shortId} - ${r.guest_name} 様`,
       html:    ownerHtml,

@@ -98,14 +98,23 @@ export async function POST(req: NextRequest) {
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
   // メール送信（ベストエフォート：失敗しても予約は成功扱い）
-  sendReservationEmails(
-    reservation,
-    stripeEnabled ? 'pending' : 'confirmed',
-  ).catch(console.error)
+  // サーバーレスではレスポンス返却後に関数が凍結されるため、必ず await して送信を完了させる
+  try {
+    await sendReservationEmails(
+      reservation,
+      stripeEnabled ? 'pending' : 'confirmed',
+    )
+  } catch (e) {
+    console.error('sendReservationEmails failed:', e)
+  }
 
   // Stripe 未設定（即時確定）の場合のみ LINE 通知（ベストエフォート）
   if (!stripeEnabled) {
-    sendOwnerLineNotification(reservation).catch(console.error)
+    try {
+      await sendOwnerLineNotification(reservation)
+    } catch (e) {
+      console.error('sendOwnerLineNotification failed:', e)
+    }
   }
 
   return NextResponse.json({ clientSecret, reservationId: reservation.id })

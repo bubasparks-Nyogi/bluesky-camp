@@ -16,7 +16,11 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
   if (status === 'cancelled') {
-    postCancellationEntry(params.id).catch(console.error)
+    try {
+      await postCancellationEntry(params.id)
+    } catch (e) {
+      console.error('postCancellationEntry failed:', e)
+    }
   }
 
   return NextResponse.json({ ok: true })

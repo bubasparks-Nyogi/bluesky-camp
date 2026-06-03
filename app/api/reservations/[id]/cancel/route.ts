@@ -49,10 +49,19 @@ export async function POST(
   }
 
   // メール送信（ベストエフォート：失敗しても処理は成功扱い）
-  sendCancellationEmails(reservation, feeResult).catch(console.error)
+  // サーバーレスではレスポンス返却後に関数が凍結されるため await して完了させる
+  try {
+    await sendCancellationEmails(reservation, feeResult)
+  } catch (e) {
+    console.error('sendCancellationEmails failed:', e)
+  }
 
   // 会計仕訳（best-effort）
-  postCancellationEntry(params.id).catch(console.error)
+  try {
+    await postCancellationEntry(params.id)
+  } catch (e) {
+    console.error('postCancellationEntry failed:', e)
+  }
 
   return NextResponse.json({
     ok:  true,

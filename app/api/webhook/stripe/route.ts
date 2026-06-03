@@ -28,10 +28,17 @@ export async function POST(req: NextRequest) {
       .single()
 
     if (reservation) {
-      // 確定メール送信（ベストエフォート）
-      sendReservationConfirmedEmail(reservation).catch(console.error)
-      // オーナーへ LINE 通知（ベストエフォート）
-      sendOwnerLineNotification(reservation).catch(console.error)
+      // サーバーレスではレスポンス返却後に関数が凍結されるため await して完了させる
+      try {
+        await sendReservationConfirmedEmail(reservation)
+      } catch (e) {
+        console.error('sendReservationConfirmedEmail failed:', e)
+      }
+      try {
+        await sendOwnerLineNotification(reservation)
+      } catch (e) {
+        console.error('sendOwnerLineNotification failed:', e)
+      }
     }
   }
 

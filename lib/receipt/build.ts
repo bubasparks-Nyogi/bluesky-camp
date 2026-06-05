@@ -17,7 +17,6 @@ function toForm(r: ReservationRow): ReservationFormData {
     guestName:       r.guest_name,
     guestEmail:      r.guest_email,
     guestPhone:      r.guest_phone,
-    agreedToTerms:   true,
   }
 }
 

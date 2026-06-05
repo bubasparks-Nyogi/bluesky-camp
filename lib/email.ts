@@ -5,6 +5,9 @@ import ReservationConfirm  from '@/emails/ReservationConfirm'
 import ReservationNotify   from '@/emails/ReservationNotify'
 import CancellationConfirm from '@/emails/CancellationConfirm'
 import CancellationNotify  from '@/emails/CancellationNotify'
+import ReceiptEmail from '@/emails/ReceiptEmail'
+import CancellationFeeReceipt from '@/emails/CancellationFeeReceipt'
+import type { ReceiptModel, CancellationFeeModel } from '@/lib/receipt/types'
 import type { CancellationFeeResult } from '@/lib/cancellation'
 import { getWeatherForecast } from '@/lib/weather'
 
@@ -189,4 +192,28 @@ export async function sendCancellationEmails(
       html:    ownerHtml,
     }),
   ])
+}
+
+/**
+ * 総合領収書を送信（B-3）。
+ */
+export async function sendReceiptEmail(model: ReceiptModel, to: string): Promise<void> {
+  const html = await render(ReceiptEmail({ model }))
+  await sendMail({
+    to,
+    subject: `【@blueSky】ご利用明細領収書 - ${model.reservationShortId}`,
+    html,
+  })
+}
+
+/**
+ * キャンセル料明細書を送信（B-3）。
+ */
+export async function sendCancellationFeeEmail(model: CancellationFeeModel, to: string): Promise<void> {
+  const html = await render(CancellationFeeReceipt({ model }))
+  await sendMail({
+    to,
+    subject: `【@blueSky】キャンセル料明細書 - ${model.reservationShortId}`,
+    html,
+  })
 }

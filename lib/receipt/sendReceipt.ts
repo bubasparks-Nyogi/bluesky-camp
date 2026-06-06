@@ -20,11 +20,11 @@ export async function sendReceiptForReservation(
   }))
 
   let isRepeater = false
-  if (reservation.line_user_id) {
+  if (reservation.user_id) {
     const { count } = await supabaseAdmin
       .from('reservations')
       .select('*', { count: 'exact', head: true })
-      .eq('line_user_id', reservation.line_user_id)
+      .eq('user_id', reservation.user_id)
       .neq('id', reservation.id)
     isRepeater = (count ?? 0) >= 1
   }

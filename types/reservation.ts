@@ -61,6 +61,9 @@ export interface ReservationRow {
   total_amount:      number
   stripe_payment_id: string | null
   line_user_id:      string | null
+  user_id:           string | null
+  payment_method:    'onsite' | 'prepaid' | null
+  paid_at:           string | null
   agreed_to_terms_at: string | null
   created_at:        string
 }

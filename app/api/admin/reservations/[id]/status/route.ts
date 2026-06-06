@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 import { createSupabaseServerClient } from '@/lib/supabase-server'
 import { postCancellationEntry } from '@/lib/accounting/cancelHook'
+import { postCancellationFeeReceipt } from '@/lib/receipt/cancelFeeHook'
 
 export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
   const supabase = createSupabaseServerClient()
@@ -20,6 +21,11 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
       await postCancellationEntry(params.id)
     } catch (e) {
       console.error('postCancellationEntry failed:', e)
+    }
+    try {
+      await postCancellationFeeReceipt(params.id)
+    } catch (e) {
+      console.error('postCancellationFeeReceipt failed:', e)
     }
   }
 

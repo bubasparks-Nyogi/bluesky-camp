@@ -4,6 +4,7 @@ import { supabaseAdmin } from '@/lib/supabase'
 import { calcCancellationFee } from '@/lib/cancellation'
 import { sendCancellationEmails } from '@/lib/email'
 import { postCancellationEntry } from '@/lib/accounting/cancelHook'
+import { postCancellationFeeReceipt } from '@/lib/receipt/cancelFeeHook'
 
 export async function POST(
   req: NextRequest,
@@ -61,6 +62,12 @@ export async function POST(
     await postCancellationEntry(params.id)
   } catch (e) {
     console.error('postCancellationEntry failed:', e)
+  }
+
+  try {
+    await postCancellationFeeReceipt(params.id)
+  } catch (e) {
+    console.error('postCancellationFeeReceipt failed:', e)
   }
 
   return NextResponse.json({

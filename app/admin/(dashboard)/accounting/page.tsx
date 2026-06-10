@@ -14,6 +14,7 @@ const LINKS = [
   { href: '/admin/accounting/trial-balance',  label: '試算表',         icon: '⚖️' },
   { href: '/admin/accounting/accounts',       label: '勘定科目マスタ', icon: '🏷️' },
   { href: '/admin/accounting/opening',        label: '期首残高',       icon: '🌱' },
+  { href: '/admin/accounting/inventory-snapshot', label: '期末棚卸', icon: '📦' },
 ]
 
 export default async function AccountingTop() {

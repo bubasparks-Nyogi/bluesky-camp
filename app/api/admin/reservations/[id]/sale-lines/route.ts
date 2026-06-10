@@ -45,5 +45,23 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     note: note ?? null,
   }).select().single()
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+
+  // B-4: 在庫消費 + 売上仕訳（best-effort）
+  try {
+    const { postSaleConsumption } = await import('@/lib/inventory/serverConsume')
+    await postSaleConsumption({
+      id: data.id, item_id: data.item_id,
+      quantity: Number(data.quantity), occurred_at: data.occurred_at,
+    })
+  } catch (e) { console.error('postSaleConsumption failed:', e) }
+  try {
+    const { postSaleEntry } = await import('@/lib/accounting/serverSalePosting')
+    await postSaleEntry({
+      id: data.id, item_name: data.item_name,
+      unit_price: data.unit_price, quantity: Number(data.quantity),
+      occurred_at: data.occurred_at,
+    })
+  } catch (e) { console.error('postSaleEntry failed:', e) }
+
   return NextResponse.json({ saleLine: data }, { status: 201 })
 }

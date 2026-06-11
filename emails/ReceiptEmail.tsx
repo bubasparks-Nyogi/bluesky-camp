@@ -51,6 +51,19 @@ export default function ReceiptEmail({ model }: { model: ReceiptModel }) {
           <Hr />
           <Row><Column style={total}>合計</Column><Column style={{ ...total, textAlign: 'right' as const }}>{yen(model.grandTotal)}</Column></Row>
 
+          <Section style={{ marginTop: 16, textAlign: 'center' as const }}>
+            <a
+              href={`${process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000'}/receipts?id=${model.reservationId}`}
+              style={{
+                display: 'inline-block', padding: '10px 20px',
+                backgroundColor: '#a16745', color: '#fff', textDecoration: 'none',
+                borderRadius: '8px', fontSize: '14px',
+              }}
+            >
+              📄 領収書PDFをダウンロード
+            </a>
+          </Section>
+
           <Hr />
           <Text style={muted}>またのご利用をお待ちしております。</Text>
           <Text style={muted}>@blueSky</Text>

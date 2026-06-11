@@ -1,4 +1,4 @@
-import { Html, Body, Container, Heading, Text, Hr, Preview, Row, Column } from '@react-email/components'
+import { Html, Body, Container, Heading, Text, Hr, Preview, Row, Column, Section } from '@react-email/components'
 import type { CancellationFeeModel } from '@/lib/receipt/types'
 
 const wrap  = { backgroundColor: '#fdf9f3', fontFamily: 'sans-serif', padding: '24px' }
@@ -27,6 +27,19 @@ export default function CancellationFeeReceipt({ model }: { model: CancellationF
           <Row><Column style={label}>適用率</Column><Column style={amount}>{model.feeLabel}</Column></Row>
           <Hr />
           <Row><Column style={total}>ご請求額</Column><Column style={{ ...total, textAlign: 'right' as const }}>{yen(model.feeAmount)}</Column></Row>
+
+          <Section style={{ marginTop: 16, textAlign: 'center' as const }}>
+            <a
+              href={`${process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000'}/receipts?id=${model.reservationId}`}
+              style={{
+                display: 'inline-block', padding: '10px 20px',
+                backgroundColor: '#a16745', color: '#fff', textDecoration: 'none',
+                borderRadius: '8px', fontSize: '14px',
+              }}
+            >
+              📄 明細書PDFをダウンロード
+            </a>
+          </Section>
 
           <Hr />
           <Text style={muted}>お振込先・お問い合わせは下記までお願いします。</Text>

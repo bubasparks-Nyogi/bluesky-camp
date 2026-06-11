@@ -38,6 +38,7 @@ describe('buildReceiptModel', () => {
     expect(m.salesSubtotal).toBe(3000*2 + 500*4)
     expect(m.grandTotal).toBe(31000 + (3000*2 + 500*4))
     expect(m.saleLines[0].amount).toBe(6000)
+    expect(m.reservationId).toBe(baseReservation.id)
   })
   it('applies repeater discount line when isRepeater=true', () => {
     const m = buildReceiptModel(baseReservation, pricing, [], { isRepeater: true })
@@ -62,5 +63,6 @@ describe('buildCancellationFeeModel', () => {
     expect(m.feeAmount).toBe(15500)
     expect(m.feeLabel).toBe('合計金額の50%')
     expect(m.cancelledAt).toBe('2026-08-13')
+    expect(m.reservationId).toBe(baseReservation.id)
   })
 })

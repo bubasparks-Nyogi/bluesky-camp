@@ -13,6 +13,7 @@ export interface ReceiptSaleLineView {
 
 export interface ReceiptModel {
   guestName: string
+  reservationId: string
   reservationShortId: string
   checkinDate: string
   checkoutDate: string
@@ -27,6 +28,7 @@ export interface ReceiptModel {
 
 export interface CancellationFeeModel {
   guestName: string
+  reservationId: string
   reservationShortId: string
   checkinDate: string
   checkoutDate: string

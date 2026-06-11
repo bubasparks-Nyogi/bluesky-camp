@@ -45,6 +45,7 @@ export function buildReceiptModel(
 
   return {
     guestName: reservation.guest_name,
+    reservationId: reservation.id,
     reservationShortId: reservation.id.slice(0, 8).toUpperCase(),
     checkinDate: reservation.checkin_date,
     checkoutDate: reservation.checkout_date,
@@ -65,6 +66,7 @@ export function buildCancellationFeeModel(
 ): CancellationFeeModel {
   return {
     guestName: reservation.guest_name,
+    reservationId: reservation.id,
     reservationShortId: reservation.id.slice(0, 8).toUpperCase(),
     checkinDate: reservation.checkin_date,
     checkoutDate: reservation.checkout_date,

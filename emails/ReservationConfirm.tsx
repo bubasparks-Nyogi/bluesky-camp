@@ -85,6 +85,18 @@ export default function ReservationConfirm({
               予約を確認する・キャンセルはこちら
             </Button>
 
+            {process.env.NEXT_PUBLIC_LIFF_ID && (
+              <Section style={{ marginTop: 8, marginBottom: 24, textAlign: 'center' as const }}>
+                <a
+                  href={`https://liff.line.me/${process.env.NEXT_PUBLIC_LIFF_ID}?reservationId=${reservationId}`}
+                  style={lineButton}
+                >
+                  📱 LINEで連絡する
+                </a>
+                <Text style={lineNote}>当日の追加注文や質問はLINEでお気軽にどうぞ</Text>
+              </Section>
+            )}
+
             {/* 天気予報 */}
             {weatherLabel && (
               <Section style={weatherBox}>
@@ -130,6 +142,8 @@ const totalRow:   React.CSSProperties = { color: '#5a3010', fontSize: '16px', fo
 const divider:    React.CSSProperties = { borderColor: '#f0c080', margin: '12px 0' }
 const pendingNote:React.CSSProperties = { color: '#d97706', fontSize: '11px', margin: '2px 0 8px' }
 const button:     React.CSSProperties = { backgroundColor: '#d4845a', color: '#ffffff', padding: '12px 24px', borderRadius: '24px', fontSize: '14px', fontWeight: 'bold', textDecoration: 'none', display: 'inline-block', marginBottom: '24px' }
+const lineButton: React.CSSProperties = { display: 'inline-block', padding: '12px 24px', backgroundColor: '#06C755', color: '#ffffff', textDecoration: 'none', borderRadius: '8px', fontSize: '14px', fontWeight: 'bold' }
+const lineNote:   React.CSSProperties = { fontSize: '11px', color: '#888', marginTop: '6px', textAlign: 'center' as const }
 const policyBox:  React.CSSProperties = { backgroundColor: '#f9eed8', borderLeft: '3px solid #d4845a', padding: '12px 16px', marginTop: '24px' }
 const weatherBox: React.CSSProperties = { backgroundColor: '#e0f2fe', borderLeft: '3px solid #38bdf8', padding: '12px 16px', marginTop: '24px' }
 const policyTitle:React.CSSProperties = { color: '#5a3010', fontSize: '13px', fontWeight: 'bold', marginBottom: '4px' }

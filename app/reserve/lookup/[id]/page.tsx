@@ -131,6 +131,17 @@ export default async function ReservationLookupDetailPage({
               ¥{r.total_amount.toLocaleString()}
             </span>
           </div>
+
+          {process.env.NEXT_PUBLIC_LIFF_ID && canCancel && (
+            <a
+              href={`https://liff.line.me/${process.env.NEXT_PUBLIC_LIFF_ID}?reservationId=${r.id}`}
+              target="_blank" rel="noopener noreferrer"
+              className="mt-6 block bg-[#06C755] hover:bg-[#05a847] text-white text-center font-bold py-3 px-4 rounded-lg transition-colors"
+            >
+              📱 LINEで連絡する
+              <span className="block text-xs font-normal mt-1">当日の追加注文や質問はLINEでお気軽にどうぞ</span>
+            </a>
+          )}
         </div>
 
         {canCancel && (

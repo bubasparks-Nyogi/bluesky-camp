@@ -316,8 +316,8 @@ function freeeExport(rows: JournalForExport[]): string   // CSV 文字列（UTF-
 所得金額               ¥150,900
 ```
 
-- 数値クリックで `DrillDownDrawer` 開く → 該当 accounts と仕訳一覧
 - 未マッピング科目あれば上部に warn バナー
+- v1 では数値クリックの内訳ドロワーは非対応（既存 `/admin/accounting/ledger` で総勘定元帳が見られるため代替可能、必要なら後付け）
 
 ### B/S セクション
 

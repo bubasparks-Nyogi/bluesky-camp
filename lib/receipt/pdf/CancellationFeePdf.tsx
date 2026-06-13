@@ -2,10 +2,16 @@ import { Document, Page, Text, View } from '@react-pdf/renderer'
 import { styles } from './styles'
 import type { CancellationFeeModel } from '@/lib/receipt/types'
 
-interface Props { model: CancellationFeeModel; isReissue: boolean; issuedAt: string }
+interface Props {
+  model: CancellationFeeModel
+  isReissue: boolean
+  issuedAt: string
+  siteAddress?: string
+  sitePhone?: string
+}
 const yen = (n: number) => `¥${n.toLocaleString()}`
 
-export default function CancellationFeePdf({ model, isReissue, issuedAt }: Props) {
+export default function CancellationFeePdf({ model, isReissue, issuedAt, siteAddress, sitePhone }: Props) {
   return (
     <Document>
       <Page size="A4" style={styles.page}>
@@ -42,6 +48,13 @@ export default function CancellationFeePdf({ model, isReissue, issuedAt }: Props
         </View>
 
         <Text style={styles.footer}>お振込先・お問い合わせは下記までお願いします。 @blueSky</Text>
+        {(siteAddress || sitePhone) && (
+          <Text style={styles.footer}>
+            {siteAddress ? `所在地: ${siteAddress}` : ''}
+            {siteAddress && sitePhone ? '　' : ''}
+            {sitePhone ? `お問い合わせ: ${sitePhone}` : ''}
+          </Text>
+        )}
       </Page>
     </Document>
   )

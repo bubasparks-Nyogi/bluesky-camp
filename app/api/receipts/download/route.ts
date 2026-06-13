@@ -7,6 +7,7 @@ import { calcCancellationFee } from '@/lib/cancellation'
 import { renderPdfToBuffer } from '@/lib/receipt/pdf/renderToBuffer'
 import ReceiptPdf from '@/lib/receipt/pdf/ReceiptPdf'
 import CancellationFeePdf from '@/lib/receipt/pdf/CancellationFeePdf'
+import { fetchSiteSettings } from '@/lib/site-settings'
 import type { ReservationRow, PricingItem } from '@/types/reservation'
 import type { SaleLineRow } from '@/lib/receipt/types'
 
@@ -31,9 +32,10 @@ export async function GET(req: NextRequest) {
   let buf: Buffer
   let filename: string
   if (type === 'receipt') {
-    const [{ data: pricingRows }, { data: saleLines }] = await Promise.all([
+    const [{ data: pricingRows }, { data: saleLines }, settings] = await Promise.all([
       supabaseAdmin.from('pricing').select('*').eq('active', true),
       supabaseAdmin.from('sale_lines').select('*').eq('reservation_id', id),
+      fetchSiteSettings().catch(() => null),
     ])
     const pricing: PricingItem[] = (pricingRows ?? []).map((p: { item_key: string; label: string; amount: number; active: boolean }) => ({
       itemKey: p.item_key, label: p.label, amount: p.amount, active: p.active,
@@ -46,12 +48,20 @@ export async function GET(req: NextRequest) {
       isRepeater = (count ?? 0) >= 1
     }
     const model = buildReceiptModel(reservation, pricing, (saleLines ?? []) as SaleLineRow[], { isRepeater })
-    buf = await renderPdfToBuffer(React.createElement(ReceiptPdf, { model, isReissue, issuedAt }))
+    buf = await renderPdfToBuffer(React.createElement(ReceiptPdf, {
+      model, isReissue, issuedAt,
+      siteAddress: settings?.address ?? undefined,
+      sitePhone: settings?.phone ?? undefined,
+    }))
     filename = `receipt-${model.reservationShortId}.pdf`
   } else {
-    const fee = calcCancellationFee(reservation.checkin_date, reservation.total_amount)
+    const [fee, settings] = [calcCancellationFee(reservation.checkin_date, reservation.total_amount), await fetchSiteSettings().catch(() => null)]
     const model = buildCancellationFeeModel(reservation, fee, issuedAt)
-    buf = await renderPdfToBuffer(React.createElement(CancellationFeePdf, { model, isReissue, issuedAt }))
+    buf = await renderPdfToBuffer(React.createElement(CancellationFeePdf, {
+      model, isReissue, issuedAt,
+      siteAddress: settings?.address ?? undefined,
+      sitePhone: settings?.phone ?? undefined,
+    }))
     filename = `cancellation-fee-${model.reservationShortId}.pdf`
   }
 

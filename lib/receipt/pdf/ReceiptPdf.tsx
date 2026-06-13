@@ -2,11 +2,17 @@ import { Document, Page, Text, View } from '@react-pdf/renderer'
 import { styles } from './styles'
 import type { ReceiptModel } from '@/lib/receipt/types'
 
-interface Props { model: ReceiptModel; isReissue: boolean; issuedAt: string }
+interface Props {
+  model: ReceiptModel
+  isReissue: boolean
+  issuedAt: string
+  siteAddress?: string
+  sitePhone?: string
+}
 
 const yen = (n: number) => `¥${n.toLocaleString()}`
 
-export default function ReceiptPdf({ model, isReissue, issuedAt }: Props) {
+export default function ReceiptPdf({ model, isReissue, issuedAt, siteAddress, sitePhone }: Props) {
   return (
     <Document>
       <Page size="A4" style={styles.page}>
@@ -67,6 +73,13 @@ export default function ReceiptPdf({ model, isReissue, issuedAt }: Props) {
         </View>
 
         <Text style={styles.footer}>またのご利用をお待ちしております。 @blueSky</Text>
+        {(siteAddress || sitePhone) && (
+          <Text style={styles.footer}>
+            {siteAddress ? `所在地: ${siteAddress}` : ''}
+            {siteAddress && sitePhone ? '　' : ''}
+            {sitePhone ? `お問い合わせ: ${sitePhone}` : ''}
+          </Text>
+        )}
       </Page>
     </Document>
   )

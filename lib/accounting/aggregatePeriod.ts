@@ -65,7 +65,7 @@ export function aggregatePeriod(
 
   const accounts: AccountSummary[] = []
   let revenue = 0, expense = 0, assets = 0, liabilities = 0, equity = 0
-  for (const acc of byAccount.values()) {
+  for (const acc of Array.from(byAccount.values())) {
     const sample = lines.find(l => l.account_id === acc.accountId)!
     acc.balance = sample.normal_balance === 'debit'
       ? acc.debitTotal - acc.creditTotal

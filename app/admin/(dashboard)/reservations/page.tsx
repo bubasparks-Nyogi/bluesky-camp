@@ -23,9 +23,23 @@ export default async function AdminReservationsPage({ searchParams }: Props) {
 
   const { count: totalCount } = await supabaseAdmin.from('reservations').select('*', { count: 'exact', head: true })
 
+  const csvParams = new URLSearchParams()
+  if (searchParams.q)      csvParams.set('q', searchParams.q)
+  if (searchParams.status) csvParams.set('status', searchParams.status)
+  if (searchParams.stay)   csvParams.set('stay', searchParams.stay)
+  if (searchParams.from)   csvParams.set('from', searchParams.from)
+  if (searchParams.to)     csvParams.set('to', searchParams.to)
+  const csvHref = `/api/admin/reservations/csv${csvParams.toString() ? `?${csvParams.toString()}` : ''}`
+
   return (
     <div>
-      <h1 className="font-serif text-2xl text-warm-700 font-bold mb-6">予約一覧</h1>
+      <div className="flex items-center justify-between mb-6 flex-wrap gap-2">
+        <h1 className="font-serif text-2xl text-warm-700 font-bold">予約一覧</h1>
+        <a href={csvHref}
+          className="bg-warm-500 hover:bg-warm-600 text-white text-sm px-3 py-1.5 rounded">
+          📥 CSVダウンロード
+        </a>
+      </div>
       <ReservationFilters totalCount={totalCount ?? 0} visibleCount={reservations?.length ?? 0} />
       <ReservationList reservations={(reservations ?? []) as ReservationRow[]} />
     </div>

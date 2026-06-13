@@ -21,6 +21,7 @@
     "@stripe/stripe-js": "^9.4.0",
     "@supabase/ssr": "^0.10.3",
     "@supabase/supabase-js": "^2.105.4",
+    "iconv-lite": "^0.7.2",
     "next": "14.2.35",
     "nodemailer": "^8.0.10",
     "react": "^18",

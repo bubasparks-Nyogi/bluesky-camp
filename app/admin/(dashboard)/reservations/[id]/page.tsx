@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation'
 import { supabaseAdmin } from '@/lib/supabase'
 import ReservationEditForm from '@/components/admin/ReservationEditForm'
 import SaleLinesEditor from '@/components/admin/sales/SaleLinesEditor'
+import ReservationDraftsSection from './ReservationDraftsSection'
 import type { ReservationRow, PricingItem } from '@/types/reservation'
 
 export const metadata = { title: '予約編集 | @blueSky 管理' }
@@ -36,6 +37,7 @@ export default async function AdminReservationEditPage({ params }: { params: { i
         sellableItems={items ?? []}
         lastReceiptLog={logs?.[0] ?? null}
       />
+      <ReservationDraftsSection reservationId={params.id} />
     </div>
   )
 }

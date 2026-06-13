@@ -2,6 +2,7 @@
 import { render } from '@react-email/components'
 import { sendMail } from '@/lib/mailer'
 import ReservationConfirm  from '@/emails/ReservationConfirm'
+import { fetchSiteSettings } from './site-settings'
 import ReservationNotify   from '@/emails/ReservationNotify'
 import CancellationConfirm from '@/emails/CancellationConfirm'
 import CancellationNotify  from '@/emails/CancellationNotify'
@@ -49,12 +50,20 @@ export async function sendReservationEmails(
 
   // 天気予報取得（失敗しても続行）
   const weather = await getWeatherForecast(r.checkin_date).catch(() => null)
+  const settings = await fetchSiteSettings().catch(() => null)
 
   const weatherProps = weather ? {
     weatherIcon:    weather.icon,
     weatherLabel:   weather.label,
     weatherTempMax: weather.tempMax,
     weatherTempMin: weather.tempMin,
+  } : {}
+  const siteInfoProps = settings ? {
+    siteCheckinTime:  settings.checkinTime,
+    siteCheckoutTime: settings.checkoutTime,
+    siteAddress:      settings.address,
+    sitePhone:        settings.phone,
+    siteGuideNote:    settings.guideNote,
   } : {}
 
   const [guestHtml, ownerHtml] = await Promise.all([
@@ -73,6 +82,7 @@ export async function sendReservationEmails(
       siteUrl:         SITE,
       status,
       ...weatherProps,
+      ...siteInfoProps,
     })),
     render(ReservationNotify({
       reservationId:   r.id,
@@ -116,6 +126,14 @@ export async function sendReservationConfirmedEmail(
   const stayTypes = r.stay_types?.length ? r.stay_types : [r.stay_type]
   const shortId   = r.id.slice(0, 8).toUpperCase()
 
+  const settings = await fetchSiteSettings().catch(() => null)
+  const siteInfoProps = settings ? {
+    siteCheckinTime:  settings.checkinTime,
+    siteCheckoutTime: settings.checkoutTime,
+    siteAddress:      settings.address,
+    sitePhone:        settings.phone,
+    siteGuideNote:    settings.guideNote,
+  } : {}
   const guestHtml = await render(ReservationConfirm({
     reservationId:   r.id,
     guestName:       r.guest_name,
@@ -130,6 +148,7 @@ export async function sendReservationConfirmedEmail(
     totalAmount:     r.total_amount,
     siteUrl:         SITE,
     status:          'confirmed',
+    ...siteInfoProps,
   }))
 
   await sendMail({

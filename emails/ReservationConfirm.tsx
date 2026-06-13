@@ -26,6 +26,12 @@ interface Props {
   weatherLabel?:   string
   weatherTempMax?: number
   weatherTempMin?: number
+  // === site_settings から注入 ===
+  siteCheckinTime?:  string
+  siteCheckoutTime?: string
+  siteAddress?:      string
+  sitePhone?:        string
+  siteGuideNote?:    string
 }
 
 export default function ReservationConfirm({
@@ -33,6 +39,7 @@ export default function ReservationConfirm({
   stayTypes, sauna, pet, ehu, transferCount, transferStation,
   totalAmount, siteUrl, status,
   weatherIcon, weatherLabel, weatherTempMax, weatherTempMin,
+  siteCheckinTime, siteCheckoutTime, siteAddress, sitePhone, siteGuideNote,
 }: Props) {
   const shortId     = reservationId.slice(0, 8).toUpperCase()
   const detailUrl   = `${siteUrl}/reserve/lookup/${reservationId}`
@@ -107,6 +114,28 @@ export default function ReservationConfirm({
               </Section>
             )}
 
+            {/* ご利用案内（site_settings） */}
+            {(siteCheckinTime || siteCheckoutTime || siteAddress || sitePhone || siteGuideNote) && (
+              <Section style={infoBox}>
+                <Text style={infoTitle}>ご利用案内</Text>
+                {siteCheckinTime && (
+                  <Text style={infoText}><strong>チェックイン時間</strong>　{siteCheckinTime}</Text>
+                )}
+                {siteCheckoutTime && (
+                  <Text style={infoText}><strong>チェックアウト時間</strong>　{siteCheckoutTime}</Text>
+                )}
+                {siteAddress && (
+                  <Text style={infoText}><strong>所在地</strong>　{siteAddress}</Text>
+                )}
+                {sitePhone && (
+                  <Text style={infoText}><strong>緊急連絡先</strong>　<a href={`tel:${sitePhone.replace(/-/g, '')}`} style={{ color: '#5a3010' }}>{sitePhone}</a></Text>
+                )}
+                {siteGuideNote && (
+                  <Text style={{ ...infoText, whiteSpace: 'pre-wrap' as const, marginTop: 8 }}>{siteGuideNote}</Text>
+                )}
+              </Section>
+            )}
+
             {/* キャンセルポリシー */}
             <Section style={policyBox}>
               <Text style={policyTitle}>キャンセルポリシー</Text>
@@ -145,6 +174,9 @@ const button:     React.CSSProperties = { backgroundColor: '#d4845a', color: '#f
 const lineButton: React.CSSProperties = { display: 'inline-block', padding: '12px 24px', backgroundColor: '#06C755', color: '#ffffff', textDecoration: 'none', borderRadius: '8px', fontSize: '14px', fontWeight: 'bold' }
 const lineNote:   React.CSSProperties = { fontSize: '11px', color: '#888', marginTop: '6px', textAlign: 'center' as const }
 const policyBox:  React.CSSProperties = { backgroundColor: '#f9eed8', borderLeft: '3px solid #d4845a', padding: '12px 16px', marginTop: '24px' }
+const infoBox:    React.CSSProperties = { backgroundColor: '#fff8eb', borderLeft: '3px solid #d4845a', padding: '12px 16px', marginTop: '24px' }
+const infoTitle:  React.CSSProperties = { color: '#5a3010', fontSize: '13px', fontWeight: 'bold', marginBottom: '6px' }
+const infoText:   React.CSSProperties = { color: '#5a3010', fontSize: '13px', margin: '2px 0' }
 const weatherBox: React.CSSProperties = { backgroundColor: '#e0f2fe', borderLeft: '3px solid #38bdf8', padding: '12px 16px', marginTop: '24px' }
 const policyTitle:React.CSSProperties = { color: '#5a3010', fontSize: '13px', fontWeight: 'bold', marginBottom: '4px' }
 const policyText: React.CSSProperties = { color: '#7c4a1e', fontSize: '12px', margin: '2px 0' }

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 import { createSupabaseServerClient } from '@/lib/supabase-server'
+import { saleLineCreateSchema } from '@/lib/validation/saleLine'
 
 export async function GET(_req: NextRequest, { params }: { params: { id: string } }) {
   const supabase = createSupabaseServerClient()
@@ -21,13 +22,19 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  let body: { itemId?: string; quantity?: number; occurredAt?: string; note?: string }
-  try { body = await req.json() } catch {
+  let raw: unknown
+  try { raw = await req.json() } catch {
     return NextResponse.json({ error: 'リクエスト形式が不正です' }, { status: 400 })
   }
-  const { itemId, quantity, occurredAt, note } = body
-  if (!itemId || typeof quantity !== 'number' || !(quantity > 0) || !occurredAt)
-    return NextResponse.json({ error: 'itemId / quantity(>0) / occurredAt が必要です' }, { status: 400 })
+  const parsed = saleLineCreateSchema.safeParse(raw)
+  if (!parsed.success) {
+    const first = parsed.error.issues[0]
+    return NextResponse.json(
+      { error: first?.message ?? '入力内容を確認してください', field: first?.path.join('.') },
+      { status: 400 },
+    )
+  }
+  const { itemId, quantity, occurredAt, note } = parsed.data
 
   const { data: item } = await supabaseAdmin
     .from('items').select('id, name, sale_price, is_sellable, is_active').eq('id', itemId).maybeSingle()

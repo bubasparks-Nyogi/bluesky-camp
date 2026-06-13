@@ -5,13 +5,26 @@ import { createPaymentIntent } from '@/lib/payment'
 import { calcTotal } from '@/lib/pricing'
 import { sendReservationEmails } from '@/lib/email'
 import { sendOwnerLineNotification } from '@/lib/notifications'
+import { reservationFormSchema } from '@/lib/validation/reservation'
 import type { ReservationFormData } from '@/types/reservation'
 
 // STRIPE_SECRET_KEY が placeholder を含む場合は決済をスキップする
 const stripeEnabled = !(process.env.STRIPE_SECRET_KEY ?? '').includes('placeholder')
 
 export async function POST(req: NextRequest) {
-  const form: ReservationFormData = await req.json()
+  let raw: unknown
+  try { raw = await req.json() } catch {
+    return NextResponse.json({ error: 'リクエスト形式が不正です' }, { status: 400 })
+  }
+  const parsed = reservationFormSchema.safeParse(raw)
+  if (!parsed.success) {
+    const first = parsed.error.issues[0]
+    return NextResponse.json(
+      { error: first?.message ?? '入力内容を確認してください', field: first?.path.join('.') },
+      { status: 400 },
+    )
+  }
+  const form: ReservationFormData = parsed.data as ReservationFormData
 
   const supabaseAuth = createSupabaseServerClient()
   const { data: { user } } = await supabaseAuth.auth.getUser()

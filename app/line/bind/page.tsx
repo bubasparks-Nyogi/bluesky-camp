@@ -3,6 +3,26 @@ import { useEffect, useState } from 'react'
 
 type Status = 'loading' | 'success' | 'error'
 
+const STORAGE_KEY = 'bind_reservationId'
+
+function readReservationIdFromUrl(): string {
+  const url = new URL(window.location.href)
+  const direct = url.searchParams.get('reservationId')
+  if (direct) return direct
+  const liffState = url.searchParams.get('liff.state')
+  if (liffState) {
+    const inner = new URLSearchParams(liffState.replace(/^\?/, ''))
+    const id = inner.get('reservationId')
+    if (id) return id
+  }
+  if (url.hash) {
+    const hash = new URLSearchParams(url.hash.replace(/^#/, ''))
+    const id = hash.get('reservationId')
+    if (id) return id
+  }
+  return ''
+}
+
 export default function LineBindPage() {
   const [status, setStatus] = useState<Status>('loading')
   const [message, setMessage] = useState('LINE連携の設定中...')
@@ -10,6 +30,11 @@ export default function LineBindPage() {
 
   useEffect(() => {
     let cancelled = false
+    // 初回マウントで URL から reservationId を sessionStorage に保存
+    // （LIFF login のリダイレクトで query が失われるため）
+    const initialId = readReservationIdFromUrl()
+    if (initialId) sessionStorage.setItem(STORAGE_KEY, initialId)
+
     ;(async () => {
       try {
         const liffId = process.env.NEXT_PUBLIC_LIFF_ID
@@ -18,8 +43,11 @@ export default function LineBindPage() {
         await liff.init({ liffId })
         if (cancelled) return
         if (!liff.isLoggedIn()) { liff.login(); return }
-        const params = new URLSearchParams(window.location.search)
-        const reservationId = params.get('reservationId') ?? params.get('liff.state')?.split('reservationId=')[1] ?? ''
+        // login 後の戻り場合は URL を再確認 + sessionStorage を最終 fallback
+        const reservationId =
+          readReservationIdFromUrl() ||
+          sessionStorage.getItem(STORAGE_KEY) ||
+          ''
         if (!reservationId) throw new Error('予約番号が見つかりません')
         const profile = await liff.getProfile()
         const idToken = liff.getIDToken()

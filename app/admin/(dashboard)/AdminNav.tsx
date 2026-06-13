@@ -45,7 +45,8 @@ const GROUPS: NavGroup[] = [
   {
     label: 'その他',
     items: [
-      { href: '/admin/manual', label: '📘 運用手順書' },
+      { href: '/admin/site-settings', label: '⚙️ サイト設定' },
+      { href: '/admin/manual',        label: '📘 運用手順書' },
     ],
   },
 ]

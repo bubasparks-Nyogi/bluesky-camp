@@ -4,7 +4,7 @@ export default function manifest(): MetadataRoute.Manifest {
   return {
     name: '@blueSky キャンプ場',
     short_name: '@blueSky',
-    description: '青森の自然に囲まれた小さなキャンプ場',
+    description: '滋賀県高島市・安曇川沿いの小さなキャンプ場',
     start_url: '/',
     display: 'standalone',
     background_color: '#fdf9f3',

@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { calcBreakdown, calcTotal } from '@/lib/pricing'
+import type { SeasonalRate } from '@/lib/pricing/seasonalMultiplier'
 import WeatherForecast from '@/components/reserve/WeatherForecast'
 import type { ReservationFormData, PricingItem } from '@/types/reservation'
 
@@ -13,17 +14,27 @@ interface Props { form: ReservationFormData; onNext: () => void; onBack: () => v
 
 export default function StepConfirm({ form, onNext, onBack }: Props) {
   const [pricing, setPricing] = useState<PricingItem[]>([])
+  const [rules, setRules] = useState<{ multiNightDiscount: number; seasonalRates: SeasonalRate[] }>({
+    multiNightDiscount: 0, seasonalRates: [],
+  })
   const [isRepeater, setIsRepeater] = useState(false)
   useEffect(() => {
-    fetch('/api/pricing').then(r => r.json()).then(d => setPricing(d.pricing ?? []))
+    fetch('/api/pricing').then(r => r.json()).then(d => {
+      setPricing(d.pricing ?? [])
+      if (d.rules) setRules({
+        multiNightDiscount: Number(d.rules.multiNightDiscount ?? 0),
+        seasonalRates: (d.rules.seasonalRates ?? []) as SeasonalRate[],
+      })
+    })
     fetch('/api/repeater-status')
       .then(r => r.json())
       .then(d => setIsRepeater(!!d.isRepeater))
       .catch(() => {})
   }, [])
 
-  const breakdown = calcBreakdown(form, pricing)
-  const total     = calcTotal(form, pricing, { isRepeater })
+  const options = { isRepeater, multiNightDiscount: rules.multiNightDiscount, seasonalRates: rules.seasonalRates }
+  const breakdown = calcBreakdown(form, pricing, options)
+  const total     = calcTotal(form, pricing, options)
 
   return (
     <div>

@@ -5,6 +5,7 @@ import { createPaymentIntent } from '@/lib/payment'
 import { calcTotal } from '@/lib/pricing'
 import { sendReservationEmails } from '@/lib/email'
 import { sendOwnerLineNotification } from '@/lib/notifications'
+import { fetchPricingRules } from '@/lib/pricing/fetchRules'
 import { reservationFormSchema } from '@/lib/validation/reservation'
 import type { ReservationFormData } from '@/types/reservation'
 
@@ -63,7 +64,12 @@ export async function POST(req: NextRequest) {
     isRepeater = (count ?? 0) >= 1
   }
 
-  const totalAmount = calcTotal(form, pricing, { isRepeater })
+  const rules = await fetchPricingRules()
+  const totalAmount = calcTotal(form, pricing, {
+    isRepeater,
+    multiNightDiscount: rules.multiNightDiscount,
+    seasonalRates: rules.seasonalRates,
+  })
 
   let clientSecret:    string | null = null
   let paymentIntentId: string | null = null

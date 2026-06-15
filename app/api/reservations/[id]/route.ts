@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 import { calcTotal } from '@/lib/pricing'
+import { fetchPricingRules } from '@/lib/pricing/fetchRules'
 import { sendReservationEmails } from '@/lib/email'
 import { reservationFormSchema } from '@/lib/validation/reservation'
 import type { ReservationFormData, ReservationRow, PricingItem } from '@/types/reservation'
@@ -58,7 +59,12 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
       .eq('user_id', reservation.user_id).neq('id', params.id)
     isRepeater = (count ?? 0) >= 1
   }
-  const totalAmount = calcTotal(form, pricing, { isRepeater })
+  const rules = await fetchPricingRules()
+  const totalAmount = calcTotal(form, pricing, {
+    isRepeater,
+    multiNightDiscount: rules.multiNightDiscount,
+    seasonalRates: rules.seasonalRates,
+  })
 
   // 更新
   const { data: updated, error: updErr } = await supabaseAdmin

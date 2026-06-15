@@ -1,5 +1,33 @@
 // lib/pricing.ts
 import type { ReservationFormData, PricingItem } from '@/types/reservation'
+import { seasonalMultiplierFor, type SeasonalRate } from './pricing/seasonalMultiplier'
+
+export type { SeasonalRate }
+
+export interface PricingRulesOptions {
+  isRepeater?: boolean
+  multiNightDiscount?: number      // 0..1 (e.g., 0.10 = 10%引き 2泊目以降)
+  seasonalRates?: SeasonalRate[]
+}
+
+/** チェックインから i 日目（0-indexed）の日付 YYYY-MM-DD を返す */
+function nightDate(checkin: string, i: number): string {
+  const d = new Date(checkin)
+  d.setDate(d.getDate() + i)
+  return d.toISOString().slice(0, 10)
+}
+
+/** 宿泊料金の単泊計算（i=0 は割引なし、i>=1 は multiNightDiscount 適用） */
+function nightlyTotal(
+  baseRate: number,
+  i: number,
+  checkin: string,
+  options: PricingRulesOptions,
+): number {
+  const seasonalMul = seasonalMultiplierFor(nightDate(checkin, i), options.seasonalRates ?? [])
+  const discountMul = i === 0 ? 1 : Math.max(0, 1 - (options.multiNightDiscount ?? 0))
+  return baseRate * seasonalMul * discountMul
+}
 
 /** チェックイン〜チェックアウト間の泊数（最低1泊） */
 export function calcNights(checkin: string, checkout: string): number {
@@ -24,7 +52,7 @@ function stayTypeKey(stayType: string): string {
 export function calcTotal(
   form: ReservationFormData,
   pricing: PricingItem[],
-  options: { isRepeater?: boolean } = {},
+  options: PricingRulesOptions = {},
 ): number {
   const get = (key: string) =>
     pricing.find(p => p.itemKey === key && p.active)?.amount ?? 0
@@ -32,7 +60,13 @@ export function calcTotal(
   const nights = calcNights(form.checkinDate, form.checkoutDate)
   const types  = form.stayTypes?.length ? form.stayTypes : ['tent']
 
-  let total = types.reduce((sum, t) => sum + get(stayTypeKey(t)) * nights, 0)
+  let total = 0
+  for (const t of types) {
+    const baseRate = get(stayTypeKey(t))
+    for (let i = 0; i < nights; i++) {
+      total += nightlyTotal(baseRate, i, form.checkinDate, options)
+    }
+  }
 
   // EHU は使用量料金制のため自動加算しない
 
@@ -45,7 +79,9 @@ export function calcTotal(
     total += item.price * item.qty
   }
 
-  // リピーター割引 10%（Phase 14）
+  total = Math.round(total)
+
+  // リピーター割引 10%（Phase 14、端数切り捨て）
   if (options.isRepeater === true) {
     total = Math.floor(total * 0.9)
   }
@@ -57,6 +93,7 @@ export function calcTotal(
 export function calcBreakdown(
   form: ReservationFormData,
   pricing: PricingItem[],
+  options: PricingRulesOptions = {},
 ): Array<{ label: string; amount: number }> {
   const get = (key: string) =>
     pricing.find(p => p.itemKey === key && p.active)
@@ -65,7 +102,7 @@ export function calcBreakdown(
   const nights = calcNights(form.checkinDate, form.checkoutDate)
   const types  = form.stayTypes?.length ? form.stayTypes : ['tent']
 
-  // 各宿泊タイプを個別に内訳表示
+  // 各宿泊タイプを個別に内訳表示（連泊割引・季節料金を加味した実額）
   for (const t of types) {
     const item = get(stayTypeKey(t))
     if (item) {
@@ -76,7 +113,11 @@ export function calcBreakdown(
       const label = nights > 1
         ? `${typeLabel} × ${nights}泊`
         : typeLabel
-      rows.push({ label, amount: item.amount * nights })
+      let amount = 0
+      for (let i = 0; i < nights; i++) {
+        amount += nightlyTotal(item.amount, i, form.checkinDate, options)
+      }
+      rows.push({ label, amount: Math.round(amount) })
     }
   }
 

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 import { calcTotal } from '@/lib/pricing'
 import { fetchPricingRules } from '@/lib/pricing/fetchRules'
+import { audit } from '@/lib/security/auditLog'
 import { sendReservationEmails } from '@/lib/email'
 import { reservationFormSchema } from '@/lib/validation/reservation'
 import type { ReservationFormData, ReservationRow, PricingItem } from '@/types/reservation'
@@ -11,6 +12,8 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   try { raw = await req.json() } catch {
     return NextResponse.json({ error: 'リクエスト形式が不正です' }, { status: 400 })
   }
+  // S-2: 本人確認のため確認用メールを別フィールドで受け取る
+  const ownerEmail = (raw as { confirmEmail?: string } | null)?.confirmEmail
   const parsed = reservationFormSchema.safeParse(raw)
   if (!parsed.success) {
     const first = parsed.error.issues[0]
@@ -25,6 +28,12 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   const { data: existing } = await supabaseAdmin
     .from('reservations').select('*').eq('id', params.id).maybeSingle()
   if (!existing) return NextResponse.json({ error: '予約が見つかりません' }, { status: 404 })
+
+  // S-2: 本人確認（既存予約のメールアドレスと照合、大文字小文字無視）
+  const expectedEmail = (existing as { guest_email: string }).guest_email.trim().toLowerCase()
+  const providedEmail = (ownerEmail ?? form.guestEmail).trim().toLowerCase()
+  if (providedEmail !== expectedEmail)
+    return NextResponse.json({ error: '本人確認に失敗しました' }, { status: 403 })
   const reservation = existing as ReservationRow
   if (reservation.status === 'cancelled')
     return NextResponse.json({ error: 'キャンセル済みの予約は変更できません' }, { status: 409 })
@@ -86,6 +95,13 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     })
     .eq('id', params.id).select().single()
   if (updErr) return NextResponse.json({ error: updErr.message }, { status: 500 })
+
+  // 監査ログ
+  await audit({
+    actor: form.guestEmail, action: 'reservation.update',
+    targetType: 'reservation', targetId: params.id,
+    detail: { oldTotal: reservation.total_amount, newTotal: totalAmount },
+  })
 
   // 確認メール再送（best-effort）
   try {

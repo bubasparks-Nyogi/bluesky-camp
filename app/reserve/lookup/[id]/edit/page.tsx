@@ -43,6 +43,7 @@ export default async function EditReservationPage({ params }: { params: { id: st
       reservationId: reservation.id,
       initial,
       oldTotal: reservation.total_amount,
+      originalEmail: reservation.guest_email,
     }} />
   )
 }

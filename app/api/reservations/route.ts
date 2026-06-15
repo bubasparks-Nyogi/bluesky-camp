@@ -7,12 +7,22 @@ import { sendReservationEmails } from '@/lib/email'
 import { sendOwnerLineNotification } from '@/lib/notifications'
 import { fetchPricingRules } from '@/lib/pricing/fetchRules'
 import { reservationFormSchema } from '@/lib/validation/reservation'
+import { memoryRateLimit } from '@/lib/security/rateLimit'
 import type { ReservationFormData } from '@/types/reservation'
 
 // STRIPE_SECRET_KEY が placeholder を含む場合は決済をスキップする
 const stripeEnabled = !(process.env.STRIPE_SECRET_KEY ?? '').includes('placeholder')
 
 export async function POST(req: NextRequest) {
+  // S-3: 連打防止（同一IP/15分間 5回まで）
+  const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown'
+  if (memoryRateLimit(`reservation:${ip}`, 15 * 60 * 1000, 5)) {
+    return NextResponse.json(
+      { error: '短時間に多数のリクエストを受信しました。しばらくお待ちください。' },
+      { status: 429 },
+    )
+  }
+
   let raw: unknown
   try { raw = await req.json() } catch {
     return NextResponse.json({ error: 'リクエスト形式が不正です' }, { status: 400 })

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 import { createSupabaseServerClient } from '@/lib/supabase-server'
 import { validateApprove } from '@/lib/admin/validateApprove'
+import { audit } from '@/lib/security/auditLog'
 
 export async function POST(_req: NextRequest, { params }: { params: { id: string } }) {
   const supabase = createSupabaseServerClient()
@@ -52,6 +53,12 @@ export async function POST(_req: NextRequest, { params }: { params: { id: string
       occurred_at: line.occurred_at,
     })
   } catch (e) { console.error('postSaleEntry failed:', e) }
+
+  await audit({
+    actor: user.email ?? 'admin', action: 'sale_draft.approve',
+    targetType: 'sale_draft', targetId: params.id,
+    detail: { saleLineId: line.id, itemId: draft.item_id, quantity: Number(draft.quantity), unitPrice },
+  })
 
   return NextResponse.json({ saleLineId: line.id }, { status: 200 })
 }

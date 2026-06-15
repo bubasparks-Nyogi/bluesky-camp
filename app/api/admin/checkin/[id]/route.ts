@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 import { createSupabaseServerClient } from '@/lib/supabase-server'
+import { audit } from '@/lib/security/auditLog'
 
 export async function POST(_req: NextRequest, { params }: { params: { id: string } }) {
   const supabase = createSupabaseServerClient()
@@ -16,5 +17,11 @@ export async function POST(_req: NextRequest, { params }: { params: { id: string
   const { error } = await supabaseAdmin
     .from('reservations').update({ checked_in_at: new Date().toISOString() }).eq('id', params.id)
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+
+  await audit({
+    actor: user.email ?? 'admin', action: 'reservation.checkin',
+    targetType: 'reservation', targetId: params.id,
+  })
+
   return NextResponse.json({ ok: true })
 }

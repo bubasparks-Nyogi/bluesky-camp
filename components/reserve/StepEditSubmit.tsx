@@ -6,10 +6,11 @@ interface Props {
   form: ReservationFormData
   reservationId: string
   oldTotal: number
+  originalEmail: string
   onBack: () => void
 }
 
-export default function StepEditSubmit({ form, reservationId, oldTotal, onBack }: Props) {
+export default function StepEditSubmit({ form, reservationId, oldTotal, originalEmail, onBack }: Props) {
   const [loading, setLoading] = useState(false)
   const [error, setError]     = useState<string | null>(null)
   const [result, setResult]   = useState<{ priceChanged: boolean; newTotal: number } | null>(null)
@@ -19,7 +20,7 @@ export default function StepEditSubmit({ form, reservationId, oldTotal, onBack }
     const res = await fetch(`/api/reservations/${reservationId}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(form),
+      body: JSON.stringify({ ...form, confirmEmail: originalEmail }),
     })
     const json = await res.json()
     if (!res.ok) { setError(json.error ?? '変更に失敗しました'); setLoading(false); return }

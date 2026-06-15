@@ -20,6 +20,7 @@ interface Props {
     reservationId: string
     initial: ReservationFormData
     oldTotal: number
+    originalEmail: string
   }
 }
 
@@ -50,7 +51,7 @@ export default function ReserveFlow({ initialDate, editMode }: Props) {
   const back = () => setStep(s => (s - 1) as StepIndex)
 
   const lastStep = editMode
-    ? <StepEditSubmit key={9} form={form} reservationId={editMode.reservationId} oldTotal={editMode.oldTotal} onBack={back} />
+    ? <StepEditSubmit key={9} form={form} reservationId={editMode.reservationId} oldTotal={editMode.oldTotal} originalEmail={editMode.originalEmail} onBack={back} />
     : <StepPayment   key={9} form={form} onBack={back} />
 
   const steps = [

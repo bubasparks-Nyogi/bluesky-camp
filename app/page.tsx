@@ -62,6 +62,11 @@ export default async function HomePage() {
       <ReviewSection />
       <Contact />
       <footer className="bg-warm-700 text-warm-300 text-center py-6 text-xs">
+        <div className="mb-3 flex justify-center gap-4">
+          <a href="/help"    className="text-warm-200 hover:text-white">使い方ガイド</a>
+          <a href="/access"  className="text-warm-200 hover:text-white">アクセス</a>
+          <a href="/reserve" className="text-warm-200 hover:text-white">ご予約</a>
+        </div>
         <p>© 2026 @blueSky. All rights reserved.</p>
         <p className="mt-1">滋賀県高島市安曇川町川島1478-5</p>
       </footer>

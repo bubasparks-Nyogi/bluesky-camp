@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2500 1686" width="2500" height="1686">
+  <defs>
+    <linearGradient id="warmA" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#d4845a"/>
+      <stop offset="100%" stop-color="#a16745"/>
+    </linearGradient>
+    <linearGradient id="warmB" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#e4a574"/>
+      <stop offset="100%" stop-color="#c08355"/>
+    </linearGradient>
+    <linearGradient id="warmC" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#c9a87e"/>
+      <stop offset="100%" stop-color="#8a6e54"/>
+    </linearGradient>
+    <linearGradient id="warmD" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#7a5640"/>
+      <stop offset="100%" stop-color="#5a3010"/>
+    </linearGradient>
+  </defs>
+
+  <!-- 背景 -->
+  <rect width="2500" height="1686" fill="#fdf8f0"/>
+
+  <!-- 4 ボタン領域（タップ判定はLINE Manager 側で行うので背景画像は装飾のみ） -->
+  <!-- 区切り線（白） -->
+  <line x1="1250" y1="0" x2="1250" y2="1686" stroke="#fdf8f0" stroke-width="12"/>
+  <line x1="0" y1="843" x2="2500" y2="843" stroke="#fdf8f0" stroke-width="12"/>
+
+  <!-- 左上：予約 -->
+  <rect x="0" y="0" width="1250" height="843" fill="url(#warmA)"/>
+  <text x="625" y="380" font-family="sans-serif" font-size="320" text-anchor="middle" fill="#ffffff">📅</text>
+  <text x="625" y="600" font-family="sans-serif" font-size="160" font-weight="bold" text-anchor="middle" fill="#ffffff">予約する</text>
+  <text x="625" y="710" font-family="sans-serif" font-size="60" text-anchor="middle" fill="#ffffff" opacity="0.85">空き状況を確認</text>
+
+  <!-- 右上：アクセス -->
+  <rect x="1250" y="0" width="1250" height="843" fill="url(#warmB)"/>
+  <text x="1875" y="380" font-family="sans-serif" font-size="320" text-anchor="middle" fill="#ffffff">📍</text>
+  <text x="1875" y="600" font-family="sans-serif" font-size="160" font-weight="bold" text-anchor="middle" fill="#ffffff">アクセス</text>
+  <text x="1875" y="710" font-family="sans-serif" font-size="60" text-anchor="middle" fill="#ffffff" opacity="0.85">地図・行き方</text>
+
+  <!-- 左下：よくある質問 -->
+  <rect x="0" y="843" width="1250" height="843" fill="url(#warmC)"/>
+  <text x="625" y="1230" font-family="sans-serif" font-size="320" text-anchor="middle" fill="#ffffff">❓</text>
+  <text x="625" y="1450" font-family="sans-serif" font-size="160" font-weight="bold" text-anchor="middle" fill="#ffffff">よくある質問</text>
+  <text x="625" y="1560" font-family="sans-serif" font-size="60" text-anchor="middle" fill="#ffffff" opacity="0.85">FAQ・ご利用案内</text>
+
+  <!-- 右下：電話 -->
+  <rect x="1250" y="843" width="1250" height="843" fill="url(#warmD)"/>
+  <text x="1875" y="1230" font-family="sans-serif" font-size="320" text-anchor="middle" fill="#ffffff">📞</text>
+  <text x="1875" y="1450" font-family="sans-serif" font-size="160" font-weight="bold" text-anchor="middle" fill="#ffffff">電話</text>
+  <text x="1875" y="1560" font-family="sans-serif" font-size="60" text-anchor="middle" fill="#ffffff" opacity="0.85">090-6556-8224</text>
+</svg>

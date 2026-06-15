@@ -13,6 +13,7 @@ export default async function SiteSettingsPage() {
     address:       data?.address       ?? '',
     phone:         data?.phone         ?? '',
     guide_note:    data?.guide_note    ?? '',
+    access_note:   data?.access_note   ?? '',
   }
   return (
     <div>

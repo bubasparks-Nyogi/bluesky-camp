@@ -8,6 +8,7 @@ interface Initial {
   address: string
   phone: string
   guide_note: string
+  access_note: string
 }
 
 export default function SiteSettingsForm({ initial }: { initial: Initial }) {
@@ -18,6 +19,7 @@ export default function SiteSettingsForm({ initial }: { initial: Initial }) {
     address:      initial.address,
     phone:        initial.phone,
     guideNote:    initial.guide_note,
+    accessNote:   initial.access_note,
   })
   const [busy, setBusy] = useState(false)
   const [msg, setMsg] = useState<string | null>(null)
@@ -64,6 +66,10 @@ export default function SiteSettingsForm({ initial }: { initial: Initial }) {
       <div>
         <label className={label}>ご利用案内（任意）<span className="text-warm-300 text-xs ml-2">持ち物・施設・チェックイン手順など。改行はそのまま反映されます。</span></label>
         <textarea className={`${input} min-h-[140px]`} value={form.guideNote} onChange={update('guideNote')} placeholder="例：\n・受付は管理棟で行います\n・お風呂は18:00〜22:00 ..." />
+      </div>
+      <div>
+        <label className={label}>アクセス案内（任意）<span className="text-warm-300 text-xs ml-2">/access ページに表示。電車・車・周辺観光など。</span></label>
+        <textarea className={`${input} min-h-[140px]`} value={form.accessNote} onChange={update('accessNote')} placeholder="例：\n【お車の場合】\n名神京都東ICから約1時間\n\n【電車の場合】\nJR近江高島駅からタクシー約10分\n\n【周辺観光】\n白髭神社、メタセコイア並木 ..." />
       </div>
 
       {err && <p className="text-red-500 text-sm">{err}</p>}

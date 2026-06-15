@@ -13,6 +13,7 @@ import FaqSection      from '@/components/home/FaqSection'
 import ReviewSection    from '@/components/home/ReviewSection'
 import NewsSection from '@/components/home/NewsSection'
 import { supabaseAdmin } from '@/lib/supabase'
+import { fetchSiteSettings } from '@/lib/site-settings'
 
 async function getPhotos(section: 'hero' | 'facilities') {
   const { data } = await supabaseAdmin
@@ -29,10 +30,11 @@ async function getFaqs() {
 }
 
 export default async function HomePage() {
-  const [heroPhotos, facilityPhotos, faqs] = await Promise.all([
+  const [heroPhotos, facilityPhotos, faqs, settings] = await Promise.all([
     getPhotos('hero'),
     getPhotos('facilities'),
     getFaqs(),
+    fetchSiteSettings().catch(() => null),
   ])
 
   return (
@@ -50,7 +52,12 @@ export default async function HomePage() {
           <BookingCalendar />
         </div>
       </section>
-      <Access />
+      <Access
+        address={settings?.address}
+        phone={settings?.phone}
+        checkinTime={settings?.checkinTime}
+        checkoutTime={settings?.checkoutTime}
+      />
       <FaqSection faqs={faqs} />
       <ReviewSection />
       <Contact />

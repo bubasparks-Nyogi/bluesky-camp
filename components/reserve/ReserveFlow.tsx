@@ -12,9 +12,15 @@ import StepGuestInfo from './StepGuestInfo'
 import StepTerms     from './StepTerms'
 import StepConfirm   from './StepConfirm'
 import StepPayment   from './StepPayment'
+import StepEditSubmit from './StepEditSubmit'
 
 interface Props {
   initialDate?: string
+  editMode?: {
+    reservationId: string
+    initial: ReservationFormData
+    oldTotal: number
+  }
 }
 
 function buildInitial(initialDate?: string): ReservationFormData {
@@ -36,12 +42,16 @@ function buildInitial(initialDate?: string): ReservationFormData {
   }
 }
 
-export default function ReserveFlow({ initialDate }: Props) {
-  const [step, setStep] = useState<StepIndex>(initialDate ? 1 : 0)
-  const [form, setForm] = useState<ReservationFormData>(() => buildInitial(initialDate))
+export default function ReserveFlow({ initialDate, editMode }: Props) {
+  const [step, setStep] = useState<StepIndex>(editMode ? 0 : (initialDate ? 1 : 0))
+  const [form, setForm] = useState<ReservationFormData>(() => editMode ? editMode.initial : buildInitial(initialDate))
   const update = (u: Partial<ReservationFormData>) => setForm(f => ({ ...f, ...u }))
   const next = () => setStep(s => (s + 1) as StepIndex)
   const back = () => setStep(s => (s - 1) as StepIndex)
+
+  const lastStep = editMode
+    ? <StepEditSubmit key={9} form={form} reservationId={editMode.reservationId} oldTotal={editMode.oldTotal} onBack={back} />
+    : <StepPayment   key={9} form={form} onBack={back} />
 
   const steps = [
     <StepDate key={0} form={form} onChange={update} onNext={next} />,
@@ -53,11 +63,16 @@ export default function ReserveFlow({ initialDate }: Props) {
     <StepGuestInfo key={6} form={form} onChange={update} onNext={next} onBack={back} />,
     <StepTerms     key={7} onNext={next} onBack={back} />,
     <StepConfirm   key={8} form={form} onNext={next} onBack={back} />,
-    <StepPayment   key={9} form={form} onBack={back} />,
+    lastStep,
   ]
 
   return (
     <div className="max-w-lg mx-auto px-4 py-10 min-h-screen">
+      {editMode && (
+        <div className="bg-warm-100 text-warm-700 text-sm px-4 py-2 rounded-lg mb-4 text-center">
+          📝 予約を変更しています（予約番号: {editMode.reservationId.slice(0, 8).toUpperCase()}）
+        </div>
+      )}
       <div className="mb-8">
         <div className="flex justify-between text-xs text-warm-400 mb-2">
           <span>STEP {step + 1} / {STEP_LABELS.length}</span>

@@ -145,13 +145,19 @@ export default async function ReservationLookupDetailPage({
         </div>
 
         {canCancel && (
-          <CancelModalWrapper
-            reservationId={r.id}
-            guestEmail={r.guest_email}
-            checkinDate={r.checkin_date}
-            totalAmount={r.total_amount}
-            feeResult={feeResult}
-          />
+          <>
+            <Link href={`/reserve/lookup/${r.id}/edit`}
+              className="block bg-warm-500 hover:bg-warm-600 text-white text-center font-bold py-3 px-4 rounded-lg mb-3 transition-colors">
+              📝 予約を変更する
+            </Link>
+            <CancelModalWrapper
+              reservationId={r.id}
+              guestEmail={r.guest_email}
+              checkinDate={r.checkin_date}
+              totalAmount={r.total_amount}
+              feeResult={feeResult}
+            />
+          </>
         )}
 
         {r.status === 'cancelled' && (

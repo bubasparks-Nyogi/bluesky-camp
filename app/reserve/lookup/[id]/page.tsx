@@ -3,7 +3,9 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { supabaseAdmin } from '@/lib/supabase'
 import { calcCancellationFee } from '@/lib/cancellation'
+import { SITE_URL } from '@/lib/seo-constants'
 import CancelModalWrapper from './CancelModalWrapper'
+import CheckinQR from './CheckinQR'
 
 const STAY_LABELS: Record<string, string> = {
   tent:      'テント設営',
@@ -40,6 +42,16 @@ export default async function ReservationLookupDetailPage({
     ? (r.stay_types as string[])
     : [(r.stay_type as string)]
   const canCancel = r.status !== 'cancelled'
+
+  // チェックイン日 ±1 日の範囲のみ QR コード表示
+  const today = new Date().toISOString().slice(0, 10)
+  const checkinD = new Date(r.checkin_date)
+  const dayBefore = new Date(checkinD); dayBefore.setDate(dayBefore.getDate() - 1)
+  const dayAfter  = new Date(checkinD); dayAfter.setDate(dayAfter.getDate() + 1)
+  const showQR = r.status !== 'cancelled'
+    && today >= dayBefore.toISOString().slice(0, 10)
+    && today <= dayAfter.toISOString().slice(0, 10)
+    && !(r as { checked_in_at?: string | null }).checked_in_at
 
   // 泊数計算（最低1泊）
   const nights = Math.max(1, Math.round(
@@ -143,6 +155,16 @@ export default async function ReservationLookupDetailPage({
             </a>
           )}
         </div>
+
+        {showQR && (
+          <CheckinQR reservationId={r.id} baseUrl={SITE_URL} />
+        )}
+
+        {(r as { checked_in_at?: string | null }).checked_in_at && (
+          <div className="bg-green-50 border border-green-200 rounded-xl p-4 text-center text-green-700 text-sm mt-6">
+            ✅ チェックイン済み
+          </div>
+        )}
 
         {canCancel && (
           <>

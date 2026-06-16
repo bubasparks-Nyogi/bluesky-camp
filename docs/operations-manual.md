@@ -205,7 +205,83 @@ GitHub に自動保管されているため追加作業は不要。`main` ブラ
 
 ---
 
-## 10. クイックリンク集
+## 10. セキュリティ
+
+### 10-1. 実装済みのセキュリティ対策（要旨）
+
+| カテゴリ | 内容 |
+|------|------|
+| 認証 | `/admin/*` と `/api/admin/*` は middleware で `ADMIN_EMAILS` 一致を強制（ロールチェック）|
+| 入力検証 | 公開予約API・予約変更API・admin sale-lines API・お問い合わせAPI に zod スキーマ適用 |
+| 本人確認 | 予約変更APIで元メールと一致確認、領収書照会は予約ID+メール |
+| レート制限 | 公開予約API・領収書 lookup・お問い合わせ・公開GET 5件・LINE bind に同一IP単位の制限 |
+| HTTP ヘッダー | HSTS / X-Frame-Options / X-Content-Type-Options / Referrer-Policy / Permissions-Policy / CSP 適用 |
+| Webhook | LINE は HMAC-SHA256 署名検証 + 冪等性、Komoju 統合時は同パターン |
+| 暗号化 | 全通信 HTTPS、Vercel 環境変数は暗号化保存 |
+| 監査ログ | `audit_logs` テーブルで重要操作を記録、1年経過分は Cron で自動削除 |
+| RLS | DB アクセスはサーバー側 `supabaseAdmin` のみ、anon クライアントは廃止済 |
+
+### 10-2. 既知の npm 脆弱性（受け入れリスク）
+
+`npm audit` で残り5件の脆弱性が報告されているが、いずれも本プロジェクトの脅威モデル上、実害リスクは低いと判断して継続運用している。
+
+#### Next.js 14 系の advisory（13件、High 中心）
+
+修正には Next.js 14 → 16 の **major upgrade** が必要。breaking change を含むため、別途専用プロジェクトとして対応する。
+
+**現状の緩和策**:
+
+| advisory | 緩和策 |
+|------|------|
+| DoS via Image Optimizer remotePatterns | `next.config.mjs` で Supabase ホストのみ許可、CSP の `img-src` で制限 |
+| HTTP request smuggling in rewrites | rewrite ルール未使用 |
+| Middleware redirect cache poisoning | キャッシュ前提の middleware redirect 未使用 |
+| XSS in beforeInteractive scripts | `<Script strategy="beforeInteractive">` 未使用 |
+| Cache poisoning in RSC | キャッシュキーに認証情報を含まない構造、影響軽微 |
+| Server Components DoS | レート制限 (S-3, N-4) で軽減 |
+
+#### `postcss` < 8.5.10（Moderate, XSS）
+
+ビルド時のみ使用（実行時に外部入力を扱わない）。本番影響なし。
+
+#### `glob` 10.x（High, command injection）
+
+`eslint-config-next` 経由の **dev dep**（開発時のみ）。本番ランタイムに含まれず影響なし。
+
+### 10-3. 推奨される定期チェック
+
+| 頻度 | 内容 |
+|------|------|
+| 月1 | `npm audit` で新規脆弱性を確認、Critical なら即時対応 |
+| 月1 | Vercel ログで 4xx/5xx 急増・不審なアクセスパターン確認 |
+| 月1 | `audit_logs` で異常な admin 操作有無を確認 |
+| 四半期 | Komoju / LINE の APIシークレット・Webhookシークレットローテーション |
+| 半年 | Next.js / Supabase / 主要依存のバージョンチェック |
+| 年1 | Next.js major upgrade を検討（リスク評価 + ステージング検証）|
+
+### 10-4. インシデント対応の連絡先
+
+- 開発担当: （依頼者の連絡先）
+- Supabase 障害: https://status.supabase.com/
+- Vercel 障害: https://www.vercel-status.com/
+- Komoju 障害: https://status.komoju.com/
+
+### 10-5. 環境変数のローテーション手順
+
+万一いずれかの env が漏洩した場合の優先順位:
+
+| 変数 | ローテーション手順 |
+|------|------|
+| `SUPABASE_SERVICE_ROLE_KEY` | Supabase ダッシュボード > Settings > API > Reset Service Role → Vercel に反映 → 再デプロイ（最重要、漏洩した場合 DB 全データ取得される）|
+| `KOMOJU_SECRET_KEY` | Komoju ダッシュボードで再発行 → Vercel 更新 → 再デプロイ |
+| `LINE_CHANNEL_SECRET` / `KOMOJU_WEBHOOK_SECRET` | 各サービスのコンソールで再発行 → Vercel 更新 → 再デプロイ |
+| `ANTHROPIC_API_KEY` | Anthropic Console で revoke → 新規発行 → Vercel 更新 |
+| `STRIPE_*` | Stripe Dashboard で revoke → Vercel 更新 |
+| `ADMIN_EMAILS` | 即時 Vercel 更新で対応可能（漏洩リスク自体は低い）|
+
+---
+
+## 11. クイックリンク集
 
 | やりたいこと | URL |
 |------------|-----|

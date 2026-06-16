@@ -3,6 +3,7 @@ import { supabaseAdmin } from '@/lib/supabase'
 import { verifySignature } from '@/lib/line/verifySignature'
 import { classifySender } from '@/lib/line/classifySender'
 import { resolveActiveReservation, type ActiveReservationRow } from '@/lib/line/resolveActiveReservation'
+import { trimLineEvent } from '@/lib/security/trimWebhookPayload'
 import { extractSaleDrafts } from '@/lib/ai/extractSaleDrafts'
 import { computeReplySuffix } from '@/lib/notifications/computeReplySuffix'
 import { shouldPushOwnerAlert } from '@/lib/notifications/shouldPushOwnerAlert'
@@ -82,7 +83,7 @@ export async function POST(req: NextRequest) {
       sender,
       message_type: ev.message.type,
       text: ev.message.type === 'text' ? (ev.message.text ?? null) : null,
-      raw_event: ev,
+      raw_event: trimLineEvent(ev),
       received_at: new Date(ev.timestamp).toISOString(),
     }, { onConflict: 'line_message_id', ignoreDuplicates: false })
       .select('id').maybeSingle()

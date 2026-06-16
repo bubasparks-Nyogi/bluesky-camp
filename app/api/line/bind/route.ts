@@ -1,8 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 import { verifyIdToken } from '@/lib/line/verifyIdToken'
+import { memoryRateLimit } from '@/lib/security/rateLimit'
 
 export async function POST(req: NextRequest) {
+  // N-6: 同一IP 15分10回まで
+  const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown'
+  if (memoryRateLimit(`line-bind:${ip}`, 15 * 60 * 1000, 10)) {
+    return NextResponse.json(
+      { error: '短時間に多数のリクエストを受信しました。しばらくお待ちください。' },
+      { status: 429 },
+    )
+  }
+
   let body: { reservationId?: string; lineUserId?: string; idToken?: string }
   try { body = await req.json() } catch {
     return NextResponse.json({ error: 'リクエスト形式が不正です' }, { status: 400 })

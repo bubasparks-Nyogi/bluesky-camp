@@ -1,9 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
+import { checkPublicGetLimit } from '@/lib/security/publicGetLimit'
 
 const VALID_CATEGORIES = ['news', 'event', 'blog']
 
 export async function GET(req: NextRequest) {
+  const limited = checkPublicGetLimit(req, 'posts')
+  if (limited) return limited
+
   const category = req.nextUrl.searchParams.get('category')
 
   let query = supabaseAdmin

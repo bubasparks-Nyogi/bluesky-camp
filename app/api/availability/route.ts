@@ -1,11 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
+import { checkPublicGetLimit } from '@/lib/security/publicGetLimit'
 
 /**
  * GET /api/availability?year=2026&month=7
  * 指定月の「×」日付リスト（予約済み + ブロック）を返す
  */
 export async function GET(req: NextRequest) {
+  const limited = checkPublicGetLimit(req, 'availability')
+  if (limited) return limited
+
   const { searchParams } = new URL(req.url)
   const year  = Number(searchParams.get('year'))
   const month = Number(searchParams.get('month'))

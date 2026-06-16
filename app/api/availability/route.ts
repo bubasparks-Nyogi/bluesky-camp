@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { supabase } from '@/lib/supabase'
+import { supabaseAdmin } from '@/lib/supabase'
 import { checkPublicGetLimit } from '@/lib/security/publicGetLimit'
 
 /**
@@ -22,13 +22,13 @@ export async function GET(req: NextRequest) {
   const lastDay  = new Date(year, month, 0).toISOString().slice(0, 10)
 
   const [resResult, blockResult] = await Promise.all([
-    supabase
+    supabaseAdmin
       .from('reservations')
       .select('checkin_date')
       .neq('status', 'cancelled')
       .lte('checkin_date', lastDay)
       .gte('checkin_date', firstDay),
-    supabase
+    supabaseAdmin
       .from('blocked_dates')
       .select('date')
       .lte('date', lastDay)

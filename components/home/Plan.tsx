@@ -1,9 +1,9 @@
-import { supabase } from '@/lib/supabase'
+import { supabaseAdmin } from '@/lib/supabase'
 
 export default async function Plan() {
-  const { data: pricing } = await supabase
+  const { data: pricing } = await supabaseAdmin
     .from('pricing').select('item_key, label, amount').eq('active', true).order('amount', { ascending: false })
-  const { data: rentals } = await supabase
+  const { data: rentals } = await supabaseAdmin
     .from('rental_items').select('id, name, price_per_day').eq('available', true)
 
   return (

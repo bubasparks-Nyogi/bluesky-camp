@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { supabase, supabaseAdmin } from '@/lib/supabase'
+import { supabaseAdmin } from '@/lib/supabase'
 import { checkPublicGetLimit } from '@/lib/security/publicGetLimit'
 
 export async function GET(req: NextRequest) {
@@ -7,7 +7,7 @@ export async function GET(req: NextRequest) {
   if (limited) return limited
 
   const [{ data }, { data: settings }, { data: rates }] = await Promise.all([
-    supabase.from('pricing').select('item_key, label, amount, active').eq('active', true),
+    supabaseAdmin.from('pricing').select('item_key, label, amount, active').eq('active', true),
     supabaseAdmin.from('pricing_settings').select('multi_night_discount_rate').eq('id', 1).maybeSingle(),
     supabaseAdmin.from('seasonal_rates').select('start_date, end_date, multiplier'),
   ])

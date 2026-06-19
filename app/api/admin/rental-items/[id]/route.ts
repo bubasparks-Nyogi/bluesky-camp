@@ -9,8 +9,10 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
 
   const body = await req.json()
   const update: Record<string, unknown> = {}
-  if (body.price_per_day !== undefined) update.price_per_day = Number(body.price_per_day)
-  if (body.available     !== undefined) update.available     = Boolean(body.available)
+  if (body.price_per_day  !== undefined) update.price_per_day  = Number(body.price_per_day)
+  if (body.available      !== undefined) update.available      = Boolean(body.available)
+  if (body.image_url      !== undefined) update.image_url      = body.image_url || null
+  if (body.is_coming_soon !== undefined) update.is_coming_soon = Boolean(body.is_coming_soon)
 
   const { error } = await supabaseAdmin.from('rental_items').update(update).eq('id', params.id)
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })

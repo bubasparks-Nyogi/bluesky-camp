@@ -7,15 +7,16 @@ export interface SiteSettings {
   phone: string
   guideNote: string
   accessNote: string
+  ehuRate: number
 }
 
 const EMPTY: SiteSettings = {
-  checkinTime: '', checkoutTime: '', address: '', phone: '', guideNote: '', accessNote: '',
+  checkinTime: '', checkoutTime: '', address: '', phone: '', guideNote: '', accessNote: '', ehuRate: 50,
 }
 
 export async function fetchSiteSettings(): Promise<SiteSettings> {
   const { data } = await supabaseAdmin
-    .from('site_settings').select('checkin_time, checkout_time, address, phone, guide_note, access_note')
+    .from('site_settings').select('checkin_time, checkout_time, address, phone, guide_note, access_note, ehu_rate')
     .eq('id', 1).maybeSingle()
   if (!data) return EMPTY
   return {
@@ -25,5 +26,6 @@ export async function fetchSiteSettings(): Promise<SiteSettings> {
     phone:        data.phone         ?? '',
     guideNote:    data.guide_note    ?? '',
     accessNote:   data.access_note   ?? '',
+    ehuRate:      Number(data.ehu_rate ?? 50),
   }
 }

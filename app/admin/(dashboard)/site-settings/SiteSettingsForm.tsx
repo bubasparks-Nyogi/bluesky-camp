@@ -9,6 +9,7 @@ interface Initial {
   phone: string
   guide_note: string
   access_note: string
+  ehu_rate: number
 }
 
 export default function SiteSettingsForm({ initial }: { initial: Initial }) {
@@ -20,6 +21,7 @@ export default function SiteSettingsForm({ initial }: { initial: Initial }) {
     phone:        initial.phone,
     guideNote:    initial.guide_note,
     accessNote:   initial.access_note,
+    ehuRate:      String(initial.ehu_rate),
   })
   const [busy, setBusy] = useState(false)
   const [msg, setMsg] = useState<string | null>(null)
@@ -34,7 +36,7 @@ export default function SiteSettingsForm({ initial }: { initial: Initial }) {
     const res = await fetch('/api/admin/site-settings', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(form),
+      body: JSON.stringify({ ...form, ehuRate: Number(form.ehuRate) }),
     })
     setBusy(false)
     if (!res.ok) { const j = await res.json().catch(() => ({})); setErr(j.error ?? '保存に失敗しました'); return }
@@ -70,6 +72,10 @@ export default function SiteSettingsForm({ initial }: { initial: Initial }) {
       <div>
         <label className={label}>アクセス案内（任意）<span className="text-warm-300 text-xs ml-2">/access ページに表示。電車・車・周辺観光など。</span></label>
         <textarea className={`${input} min-h-[140px]`} value={form.accessNote} onChange={update('accessNote')} placeholder="例：\n【お車の場合】\n名神京都東ICから約1時間\n\n【電車の場合】\nJR近江高島駅からタクシー約10分\n\n【周辺観光】\n白髭神社、メタセコイア並木 ..." />
+      </div>
+      <div>
+        <label className={label}>EHU使用料（円/kWh）<span className="text-warm-300 text-xs ml-2">予約確認メールと items.EHU使用料 の販売単価に反映されます。</span></label>
+        <input type="number" min="0" max="10000" step="1" className={`${input} w-32`} value={form.ehuRate} onChange={update('ehuRate')} />
       </div>
 
       {err && <p className="text-red-500 text-sm">{err}</p>}

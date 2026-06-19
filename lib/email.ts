@@ -64,6 +64,7 @@ export async function sendReservationEmails(
     siteAddress:      settings.address,
     sitePhone:        settings.phone,
     siteGuideNote:    settings.guideNote,
+    siteEhuRate:      settings.ehuRate,
   } : {}
 
   const [guestHtml, ownerHtml] = await Promise.all([
@@ -133,6 +134,7 @@ export async function sendReservationConfirmedEmail(
     siteAddress:      settings.address,
     sitePhone:        settings.phone,
     siteGuideNote:    settings.guideNote,
+    siteEhuRate:      settings.ehuRate,
   } : {}
   const guestHtml = await render(ReservationConfirm({
     reservationId:   r.id,

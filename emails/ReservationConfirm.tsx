@@ -32,6 +32,7 @@ interface Props {
   siteAddress?:      string
   sitePhone?:        string
   siteGuideNote?:    string
+  siteEhuRate?:      number
 }
 
 export default function ReservationConfirm({
@@ -39,7 +40,7 @@ export default function ReservationConfirm({
   stayTypes, sauna, pet, ehu, transferCount, transferStation,
   totalAmount, siteUrl, status,
   weatherIcon, weatherLabel, weatherTempMax, weatherTempMin,
-  siteCheckinTime, siteCheckoutTime, siteAddress, sitePhone, siteGuideNote,
+  siteCheckinTime, siteCheckoutTime, siteAddress, sitePhone, siteGuideNote, siteEhuRate,
 }: Props) {
   const shortId     = reservationId.slice(0, 8).toUpperCase()
   const detailUrl   = `${siteUrl}/reserve/lookup/${reservationId}`
@@ -76,7 +77,11 @@ export default function ReservationConfirm({
               <Text style={cardRow}><strong>宿泊タイプ</strong>{typeLabel}</Text>
               {sauna    && <Text style={cardRow}><strong>サウナ</strong>利用</Text>}
               {pet      && <Text style={cardRow}><strong>ペット</strong>同伴</Text>}
-              {ehu      && <Text style={cardRow}><strong>EHU</strong>使用（使用量料金制）</Text>}
+              {ehu && (
+                <Text style={cardRow}>
+                  <strong>EHU</strong>使用（¥{siteEhuRate ?? 50}/kWh、チェックアウト時に使用量を計測してご請求）
+                </Text>
+              )}
               {transferCount > 0 && (
                 <Text style={cardRow}>
                   <strong>送迎</strong>{transferCount}名（{transferStation}）

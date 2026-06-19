@@ -14,6 +14,7 @@ export default async function SiteSettingsPage() {
     phone:         data?.phone         ?? '',
     guide_note:    data?.guide_note    ?? '',
     access_note:   data?.access_note   ?? '',
+    ehu_rate:      Number(data?.ehu_rate ?? 50),
   }
   return (
     <div>

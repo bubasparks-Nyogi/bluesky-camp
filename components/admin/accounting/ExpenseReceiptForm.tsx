@@ -7,6 +7,14 @@ interface Props {
   paymentAccounts: AccountOpt[]
 }
 
+interface DriveFile {
+  id: string
+  name: string
+  mimeType: string
+  createdTime: string
+  imported: boolean
+}
+
 const LS_KEY = 'expense_last_credit_account'
 
 export default function ExpenseReceiptForm({ expenseAccounts, paymentAccounts }: Props) {
@@ -18,6 +26,7 @@ export default function ExpenseReceiptForm({ expenseAccounts, paymentAccounts }:
   const [receiptPath, setReceiptPath] = useState<string | null>(null)
   const [error, setError]       = useState<string | null>(null)
   const [done, setDone]         = useState<string | null>(null)
+  const [sourceName, setSourceName] = useState<string | null>(null)
 
   const [date, setDate]         = useState('')
   const [amount, setAmount]     = useState('')
@@ -25,12 +34,30 @@ export default function ExpenseReceiptForm({ expenseAccounts, paymentAccounts }:
   const [debit, setDebit]       = useState('')
   const [credit, setCredit]     = useState('')
 
+  // Google Drive
+  const [driveOpen, setDriveOpen]     = useState(false)
+  const [driveFiles, setDriveFiles]   = useState<DriveFile[] | null>(null)
+  const [driveLoading, setDriveLoading] = useState(false)
+  const [driveImporting, setDriveImporting] = useState<string | null>(null)
+
   const onPick = (f: File | null) => {
-    setFile(f); setError(null); setDone(null)
+    setFile(f); setError(null); setDone(null); setSourceName(null)
     setPreview(f ? URL.createObjectURL(f) : null)
   }
 
   const lastCredit = () => (typeof window !== 'undefined' ? localStorage.getItem(LS_KEY) ?? '' : '')
+
+  const applyDraft = (d: { date?: string; amount?: number; vendor?: string; suggestedAccountCode?: string }, path: string) => {
+    setReceiptPath(path)
+    setDate(d.date || '')
+    setAmount(d.amount ? String(d.amount) : '')
+    setDesc(d.vendor || '')
+    const matched = expenseAccounts.find(a => a.code === d.suggestedAccountCode)
+    setDebit(matched?.id ?? '')
+    setCredit(lastCredit() || paymentAccounts[0]?.id || '')
+    setStage('confirm')
+    if (!d.date && !d.amount) setError('読み取れませんでした。手で入力してください')
+  }
 
   const read = async () => {
     if (!file) return
@@ -41,17 +68,38 @@ export default function ExpenseReceiptForm({ expenseAccounts, paymentAccounts }:
       const res = await fetch('/api/admin/accounting/ocr-receipt', { method: 'POST', body: fd })
       const json = await res.json()
       if (!res.ok) { setError(json.error ?? '読み取りに失敗しました'); return }
-      const d = json.draft
-      setReceiptPath(json.receiptPath)
-      setDate(d.date || '')
-      setAmount(d.amount ? String(d.amount) : '')
-      setDesc(d.vendor || '')
-      const matched = expenseAccounts.find(a => a.code === d.suggestedAccountCode)
-      setDebit(matched?.id ?? '')
-      setCredit(lastCredit() || paymentAccounts[0]?.id || '')
-      setStage('confirm')
-      if (!d.date && !d.amount) setError('読み取れませんでした。手で入力してください')
+      applyDraft(json.draft, json.receiptPath)
     } finally { setReading(false) }
+  }
+
+  const openDrive = async () => {
+    setDriveOpen(true); setError(null)
+    if (driveFiles) return  // 既に取得済み
+    setDriveLoading(true)
+    try {
+      const res = await fetch('/api/admin/drive-receipts')
+      const json = await res.json()
+      if (!res.ok) { setError(json.error ?? 'Drive の取得に失敗しました'); setDriveOpen(false); return }
+      setDriveFiles(json.files ?? [])
+    } finally { setDriveLoading(false) }
+  }
+
+  const importFromDrive = async (f: DriveFile) => {
+    if (f.imported && !confirm(`「${f.name}」は取込済みです。もう一度取り込みますか？（二重計上にご注意）`)) return
+    setDriveImporting(f.id); setError(null)
+    try {
+      const res = await fetch('/api/admin/drive-receipts/import', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fileId: f.id, fileName: f.name }),
+      })
+      const json = await res.json()
+      if (!res.ok) { setError(json.error ?? '取込に失敗しました'); return }
+      setSourceName(f.name)
+      setPreview(null)
+      setDriveFiles(prev => prev?.map(x => x.id === f.id ? { ...x, imported: true } : x) ?? null)
+      setDriveOpen(false)
+      applyDraft(json.draft, json.receiptPath)
+    } finally { setDriveImporting(null) }
   }
 
   const save = async () => {
@@ -68,7 +116,7 @@ export default function ExpenseReceiptForm({ expenseAccounts, paymentAccounts }:
       if (!res.ok) { setError(json.error ?? '記帳に失敗しました'); return }
       if (typeof window !== 'undefined') localStorage.setItem(LS_KEY, credit)
       setDone('記帳しました')
-      setFile(null); setPreview(null); setReceiptPath(null); setStage('pick')
+      setFile(null); setPreview(null); setReceiptPath(null); setStage('pick'); setSourceName(null)
       setDate(''); setAmount(''); setDesc(''); setDebit('')
     } finally { setSaving(false) }
   }
@@ -84,16 +132,59 @@ export default function ExpenseReceiptForm({ expenseAccounts, paymentAccounts }:
             onChange={e => onPick(e.target.files?.[0] ?? null)}
             className="block w-full text-sm" />
           {preview && <img src={preview} alt="プレビュー" className="max-h-64 rounded-lg border border-warm-100" />}
-          <button onClick={read} disabled={!file || reading}
-            className="bg-warm-500 hover:bg-warm-600 text-white font-bold px-4 py-2 rounded-lg text-sm disabled:opacity-40">
-            {reading ? '読み取り中...' : 'レシートを読み取る'}
-          </button>
+          <div className="flex flex-wrap gap-2">
+            <button onClick={read} disabled={!file || reading}
+              className="bg-warm-500 hover:bg-warm-600 text-white font-bold px-4 py-2 rounded-lg text-sm disabled:opacity-40">
+              {reading ? '読み取り中...' : 'レシートを読み取る'}
+            </button>
+            <button onClick={openDrive} disabled={driveLoading}
+              className="bg-warm-100 hover:bg-warm-200 text-warm-700 font-bold px-4 py-2 rounded-lg text-sm disabled:opacity-40">
+              {driveLoading ? '取得中...' : '📁 Google Driveから選ぶ'}
+            </button>
+          </div>
+
+          {driveOpen && driveFiles && (
+            <div className="border border-warm-200 rounded-lg overflow-hidden">
+              <div className="px-3 py-2 bg-warm-50 border-b border-warm-100 flex items-center justify-between">
+                <span className="text-xs font-bold text-warm-600">仕入れレシートフォルダ（新しい順・最大50件）</span>
+                <button onClick={() => setDriveOpen(false)} className="text-warm-400 text-xs hover:text-warm-600">閉じる ✕</button>
+              </div>
+              {driveFiles.length === 0 ? (
+                <p className="px-3 py-4 text-center text-warm-400 text-sm">フォルダにファイルがありません</p>
+              ) : (
+                <div className="divide-y divide-warm-100 max-h-72 overflow-y-auto">
+                  {driveFiles.map(f => (
+                    <button key={f.id} onClick={() => importFromDrive(f)}
+                      disabled={driveImporting !== null}
+                      className="w-full flex items-center justify-between px-3 py-2.5 text-left hover:bg-warm-50 disabled:opacity-50">
+                      <div className="min-w-0">
+                        <p className="text-sm text-warm-700 truncate">{f.name}</p>
+                        <p className="text-xs text-warm-400">{f.createdTime.slice(0, 10)}</p>
+                      </div>
+                      <span className="shrink-0 ml-2 text-xs">
+                        {driveImporting === f.id ? (
+                          <span className="text-warm-500">読取中...</span>
+                        ) : f.imported ? (
+                          <span className="bg-green-100 text-green-700 px-2 py-0.5 rounded-full">済</span>
+                        ) : (
+                          <span className="text-warm-400">→</span>
+                        )}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
         </div>
       )}
 
       {stage === 'confirm' && (
         <div className="bg-white border border-warm-100 rounded-xl p-5 space-y-3">
           {preview && <img src={preview} alt="レシート" className="max-h-48 rounded-lg border border-warm-100" />}
+          {sourceName && (
+            <p className="text-xs text-warm-500 bg-warm-50 rounded px-3 py-2">📁 Google Drive: {sourceName}</p>
+          )}
           <div>
             <label className="block text-sm text-warm-500 mb-1">日付</label>
             <input type="date" value={date} onChange={e => setDate(e.target.value)}
@@ -130,7 +221,7 @@ export default function ExpenseReceiptForm({ expenseAccounts, paymentAccounts }:
               className="flex-1 bg-warm-500 hover:bg-warm-600 text-white font-bold py-2.5 rounded-lg text-sm disabled:opacity-40">
               {saving ? '記帳中...' : 'この内容で記帳'}
             </button>
-            <button onClick={() => { setStage('pick'); setError(null) }}
+            <button onClick={() => { setStage('pick'); setError(null); setSourceName(null) }}
               className="px-4 py-2.5 border border-warm-200 text-warm-500 hover:bg-warm-100 rounded-lg text-sm">
               やり直す
             </button>

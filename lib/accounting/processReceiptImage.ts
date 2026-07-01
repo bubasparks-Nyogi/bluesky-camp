@@ -25,9 +25,15 @@ export async function processReceiptImage(
   const candidates = (expenseAccounts ?? []).map(a => `${a.code}:${a.name}`).join(', ')
   const validCodes = (expenseAccounts ?? []).map(a => a.code as string)
 
+  const isPdf = mimeType === 'application/pdf'
   const mediaType = (['image/jpeg', 'image/png', 'image/webp', 'image/gif'].includes(mimeType)
     ? mimeType : 'image/jpeg') as 'image/jpeg' | 'image/png' | 'image/webp' | 'image/gif'
   const base64 = bytes.toString('base64')
+
+  // PDF は Claude の document ブロックでネイティブ処理（追加サービス不要）
+  const fileBlock = isPdf
+    ? { type: 'document' as const, source: { type: 'base64' as const, media_type: 'application/pdf' as const, data: base64 } }
+    : { type: 'image' as const, source: { type: 'base64' as const, media_type: mediaType, data: base64 } }
 
   let draft = parseOcrResult('', validCodes)
   const apiKey = process.env.ANTHROPIC_API_KEY
@@ -41,7 +47,7 @@ export async function processReceiptImage(
         messages: [{
           role: 'user',
           content: [
-            { type: 'image', source: { type: 'base64', media_type: mediaType, data: base64 } },
+            fileBlock,
             { type: 'text', text:
               `このレシートから次をJSONで返してください:\n` +
               `{"date":"YYYY-MM-DD","amount":整数の合計金額,"vendor":"店名","accountCode":"下の候補から最適なコード","confidence":"low|medium|high"}\n` +

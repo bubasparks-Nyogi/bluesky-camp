@@ -42,7 +42,13 @@ export default function ExpenseReceiptForm({ expenseAccounts, paymentAccounts }:
 
   const onPick = (f: File | null) => {
     setFile(f); setError(null); setDone(null); setSourceName(null)
-    setPreview(f ? URL.createObjectURL(f) : null)
+    // PDF は img プレビュー不可のためファイル名表示に切替
+    if (f && f.type === 'application/pdf') {
+      setPreview(null)
+      setSourceName(`📄 ${f.name}`)
+    } else {
+      setPreview(f ? URL.createObjectURL(f) : null)
+    }
   }
 
   const lastCredit = () => (typeof window !== 'undefined' ? localStorage.getItem(LS_KEY) ?? '' : '')
@@ -128,10 +134,13 @@ export default function ExpenseReceiptForm({ expenseAccounts, paymentAccounts }:
 
       {stage === 'pick' && (
         <div className="bg-white border border-warm-100 rounded-xl p-5 space-y-3">
-          <input type="file" accept="image/*" capture="environment"
+          <input type="file" accept="image/*,application/pdf" capture="environment"
             onChange={e => onPick(e.target.files?.[0] ?? null)}
             className="block w-full text-sm" />
           {preview && <img src={preview} alt="プレビュー" className="max-h-64 rounded-lg border border-warm-100" />}
+          {!preview && sourceName && (
+            <p className="text-xs text-warm-500 bg-warm-50 rounded px-3 py-2">{sourceName}</p>
+          )}
           <div className="flex flex-wrap gap-2">
             <button onClick={read} disabled={!file || reading}
               className="bg-warm-500 hover:bg-warm-600 text-white font-bold px-4 py-2 rounded-lg text-sm disabled:opacity-40">

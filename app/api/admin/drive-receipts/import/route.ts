@@ -20,9 +20,7 @@ export async function POST(req: NextRequest) {
   try {
     const { bytes, mimeType } = await downloadFile(body.fileId)
     if (bytes.length > OCR_MAX_IMAGE_BYTES)
-      return NextResponse.json({ error: '画像サイズが大きすぎます（10MBまで）' }, { status: 413 })
-    if (mimeType === 'application/pdf')
-      return NextResponse.json({ error: 'PDF は未対応です。画像（JPG/PNG）でアップロードしてください' }, { status: 415 })
+      return NextResponse.json({ error: 'ファイルサイズが大きすぎます（10MBまで）' }, { status: 413 })
 
     const { draft, receiptPath } = await processReceiptImage(bytes, mimeType)
 

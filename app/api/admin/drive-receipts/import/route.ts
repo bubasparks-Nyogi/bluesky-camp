@@ -40,7 +40,8 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ draft, receiptPath })
   } catch (e) {
-    console.error('drive-receipt import failed:', e)
-    return NextResponse.json({ error: 'Drive からの取込に失敗しました' }, { status: 502 })
+    const detail = e instanceof Error ? e.message : String(e)
+    console.error('drive-receipt import failed:', detail)
+    return NextResponse.json({ error: `取込失敗: ${detail}` }, { status: 502 })
   }
 }

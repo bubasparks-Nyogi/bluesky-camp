@@ -23,8 +23,8 @@ export async function POST(req: NextRequest) {
 
   const bytes = Buffer.from(await file.arrayBuffer())
   try {
-    const { draft, receiptPath } = await processReceiptImage(bytes, file.type || 'image/jpeg')
-    return NextResponse.json({ draft, receiptPath })
+    const { draft, receiptPath, previewUrl, ocrError, ocrRaw } = await processReceiptImage(bytes, file.type || 'image/jpeg')
+    return NextResponse.json({ draft, receiptPath, previewUrl, ocrError, ocrRaw })
   } catch (e) {
     console.error('ocr-receipt failed:', e)
     return NextResponse.json({ error: e instanceof Error ? e.message : '処理に失敗しました' }, { status: 500 })

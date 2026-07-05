@@ -53,8 +53,15 @@ export default function ExpenseReceiptForm({ expenseAccounts, paymentAccounts }:
 
   const lastCredit = () => (typeof window !== 'undefined' ? localStorage.getItem(LS_KEY) ?? '' : '')
 
-  const applyDraft = (d: { date?: string; amount?: number; vendor?: string; suggestedAccountCode?: string }, path: string) => {
+  const applyDraft = (
+    d: { date?: string; amount?: number; vendor?: string; suggestedAccountCode?: string },
+    path: string,
+    previewUrl?: string | null,
+    ocrError?: string | null,
+    ocrRaw?: string | null,
+  ) => {
     setReceiptPath(path)
+    if (previewUrl) setPreview(previewUrl)
     setDate(d.date || '')
     setAmount(d.amount ? String(d.amount) : '')
     setDesc(d.vendor || '')
@@ -62,7 +69,11 @@ export default function ExpenseReceiptForm({ expenseAccounts, paymentAccounts }:
     setDebit(matched?.id ?? '')
     setCredit(lastCredit() || paymentAccounts[0]?.id || '')
     setStage('confirm')
-    if (!d.date && !d.amount) setError('読み取れませんでした。手で入力してください')
+    if (!d.date && !d.amount) {
+      if (ocrError)     setError(`読み取れませんでした: ${ocrError}`)
+      else if (ocrRaw)  setError(`読み取れませんでした（Claude 応答: ${ocrRaw.slice(0, 120)}...）`)
+      else              setError('読み取れませんでした。手で入力してください')
+    }
   }
 
   const read = async () => {
@@ -74,7 +85,7 @@ export default function ExpenseReceiptForm({ expenseAccounts, paymentAccounts }:
       const res = await fetch('/api/admin/accounting/ocr-receipt', { method: 'POST', body: fd })
       const json = await res.json()
       if (!res.ok) { setError(json.error ?? '読み取りに失敗しました'); return }
-      applyDraft(json.draft, json.receiptPath)
+      applyDraft(json.draft, json.receiptPath, json.previewUrl, json.ocrError, json.ocrRaw)
     } finally { setReading(false) }
   }
 
@@ -104,7 +115,7 @@ export default function ExpenseReceiptForm({ expenseAccounts, paymentAccounts }:
       setPreview(null)
       setDriveFiles(prev => prev?.map(x => x.id === f.id ? { ...x, imported: true } : x) ?? null)
       setDriveOpen(false)
-      applyDraft(json.draft, json.receiptPath)
+      applyDraft(json.draft, json.receiptPath, json.previewUrl, json.ocrError, json.ocrRaw)
     } finally { setDriveImporting(null) }
   }
 
@@ -190,7 +201,14 @@ export default function ExpenseReceiptForm({ expenseAccounts, paymentAccounts }:
 
       {stage === 'confirm' && (
         <div className="bg-white border border-warm-100 rounded-xl p-5 space-y-3">
-          {preview && <img src={preview} alt="レシート" className="max-h-48 rounded-lg border border-warm-100" />}
+          {preview && (
+            preview.toLowerCase().includes('.pdf') || preview.toLowerCase().includes('pdf')
+              ? <a href={preview} target="_blank" rel="noopener noreferrer"
+                  className="inline-block bg-warm-100 text-warm-700 px-3 py-2 rounded text-sm hover:bg-warm-200">
+                  📄 PDF を別タブで開く
+                </a>
+              : <img src={preview} alt="レシート" className="max-h-64 rounded-lg border border-warm-100" />
+          )}
           {sourceName && (
             <p className="text-xs text-warm-500 bg-warm-50 rounded px-3 py-2">📁 Google Drive: {sourceName}</p>
           )}

@@ -7,10 +7,18 @@ import { OCR_MODEL } from '@/lib/ocrConfig'
  * レシート画像バイト列を受け取り、Supabase Storage 保存 + Claude OCR を行う共通処理。
  * ファイルアップロード経路（ocr-receipt）と Google Drive 取込経路の両方から使用。
  */
+export interface ProcessReceiptResult {
+  draft: OcrDraft
+  receiptPath: string
+  previewUrl: string | null
+  ocrError: string | null   // OCR が失敗した場合のエラー詳細（診断用）
+  ocrRaw: string | null     // Claude の生レスポンス（フィールド抽出できなかった場合）
+}
+
 export async function processReceiptImage(
   bytes: Buffer,
   mimeType: string,
-): Promise<{ draft: OcrDraft; receiptPath: string }> {
+): Promise<ProcessReceiptResult> {
   const ext = (mimeType.split('/')[1] || 'jpg').replace('jpeg', 'jpg')
   const ym = new Date().toISOString().slice(0, 7).replace('-', '')
   const path = `${ym}/${crypto.randomUUID()}.${ext}`
@@ -19,6 +27,16 @@ export async function processReceiptImage(
     contentType: mimeType || 'image/jpeg', upsert: false,
   })
   if (upErr) throw new Error(`画像の保存に失敗しました: ${upErr.message}`)
+
+  // プレビュー用の署名付きURL（1時間有効）
+  let previewUrl: string | null = null
+  try {
+    const { data: signed } = await supabaseAdmin.storage.from('receipts')
+      .createSignedUrl(path, 3600)
+    previewUrl = signed?.signedUrl ?? null
+  } catch (e) {
+    console.warn('[previewUrl] failed:', e instanceof Error ? e.message : e)
+  }
 
   const { data: expenseAccounts } = await supabaseAdmin
     .from('accounts').select('code, name').eq('category', 'expense').eq('is_active', true).order('code')
@@ -36,8 +54,13 @@ export async function processReceiptImage(
     : { type: 'image' as const, source: { type: 'base64' as const, media_type: mediaType, data: base64 } }
 
   let draft = parseOcrResult('', validCodes)
+  let ocrError: string | null = null
+  let ocrRaw: string | null = null
+
   const apiKey = process.env.ANTHROPIC_API_KEY
-  if (apiKey) {
+  if (!apiKey) {
+    ocrError = 'ANTHROPIC_API_KEY が未設定です'
+  } else {
     try {
       const client = new Anthropic({ apiKey })
       const msg = await client.messages.create({
@@ -58,10 +81,15 @@ export async function processReceiptImage(
       })
       const text = msg.content.filter(c => c.type === 'text').map(c => (c as { text: string }).text).join('\n')
       draft = parseOcrResult(text, validCodes)
+      if (!draft.date && !draft.amount) {
+        ocrRaw = text.slice(0, 500)
+        console.warn('[OCR] no fields extracted. raw response:', ocrRaw)
+      }
     } catch (e) {
-      console.error('OCR failed:', e)
+      ocrError = e instanceof Error ? e.message : String(e)
+      console.error('[OCR] failed:', ocrError)
     }
   }
 
-  return { draft, receiptPath: path }
+  return { draft, receiptPath: path, previewUrl, ocrError, ocrRaw }
 }

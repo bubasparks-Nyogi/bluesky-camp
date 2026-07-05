@@ -22,7 +22,7 @@ export async function POST(req: NextRequest) {
     if (bytes.length > OCR_MAX_IMAGE_BYTES)
       return NextResponse.json({ error: 'ファイルサイズが大きすぎます（10MBまで）' }, { status: 413 })
 
-    const { draft, receiptPath } = await processReceiptImage(bytes, mimeType)
+    const { draft, receiptPath, previewUrl, ocrError, ocrRaw } = await processReceiptImage(bytes, mimeType)
 
     // 取込記録（二重計上防止マーク）。UNIQUE 制約なので再取込時は上書き。
     await supabaseAdmin.from('drive_receipt_imports').upsert({
@@ -38,7 +38,7 @@ export async function POST(req: NextRequest) {
       detail: { fileName: body.fileName, receiptPath },
     })
 
-    return NextResponse.json({ draft, receiptPath })
+    return NextResponse.json({ draft, receiptPath, previewUrl, ocrError, ocrRaw })
   } catch (e) {
     const detail = e instanceof Error ? e.message : String(e)
     console.error('drive-receipt import failed:', detail)

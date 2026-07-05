@@ -31,9 +31,10 @@ export async function GET() {
       })),
     })
   } catch (e) {
-    console.error('drive-receipts list failed:', e)
+    const detail = e instanceof Error ? e.message : String(e)
+    console.error('drive-receipts list failed:', detail)
     return NextResponse.json(
-      { error: 'Drive フォルダの取得に失敗しました。フォルダ共有と env 設定を確認してください。' },
+      { error: `Drive 取得失敗: ${detail}` },
       { status: 502 },
     )
   }

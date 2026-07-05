@@ -27,7 +27,15 @@ export async function getAccessToken(): Promise<string> {
   const email = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL
   const rawKey = process.env.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY
   if (!email || !rawKey) throw new Error('Google サービスアカウントが未設定です')
-  const privateKey = rawKey.replace(/\\n/g, '\n')
+  // 貼り付けの揺れを吸収: 外側の "" 、\n 文字列化、CRLF、前後の空白
+  let privateKey = rawKey.trim()
+  if (privateKey.startsWith('"') && privateKey.endsWith('"')) {
+    privateKey = privateKey.slice(1, -1)
+  }
+  privateKey = privateKey.replace(/\\n/g, '\n').replace(/\r/g, '')
+  if (!privateKey.includes('BEGIN PRIVATE KEY')) {
+    throw new Error('private_key に BEGIN/END マーカーが含まれていません。値を再確認してください。')
+  }
 
   const now = Math.floor(Date.now() / 1000)
   const header = b64url(JSON.stringify({ alg: 'RS256', typ: 'JWT' }))

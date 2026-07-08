@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 import { createSupabaseServerClient } from '@/lib/supabase-server'
 import { saleLineCreateSchema } from '@/lib/validation/saleLine'
+import { normalizeTaxRate, taxFromIncluded } from '@/lib/tax'
 
 export async function GET(_req: NextRequest, { params }: { params: { id: string } }) {
   const supabase = createSupabaseServerClient()
@@ -37,10 +38,14 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
   const { itemId, quantity, occurredAt, note } = parsed.data
 
   const { data: item } = await supabaseAdmin
-    .from('items').select('id, name, sale_price, is_sellable, is_active').eq('id', itemId).maybeSingle()
+    .from('items').select('id, name, sale_price, is_sellable, is_active, tax_rate').eq('id', itemId).maybeSingle()
   if (!item)                     return NextResponse.json({ error: '品目が見つかりません' }, { status: 404 })
   if (item.is_sellable !== true) return NextResponse.json({ error: '販売不可の品目です' }, { status: 400 })
   if (item.sale_price == null)   return NextResponse.json({ error: '販売価格が未設定の品目です' }, { status: 400 })
+
+  const taxRate = normalizeTaxRate(item.tax_rate)
+  const subtotal = Math.round(item.sale_price * Number(quantity))
+  const taxAmount = taxFromIncluded(subtotal, taxRate)
 
   const { data, error } = await supabaseAdmin.from('sale_lines').insert({
     reservation_id: params.id,
@@ -48,6 +53,8 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     item_name: item.name,
     unit_price: item.sale_price,
     quantity,
+    tax_rate: taxRate,
+    tax_amount: taxAmount,
     occurred_at: occurredAt,
     note: note ?? null,
   }).select().single()

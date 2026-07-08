@@ -7,6 +7,7 @@ interface Item {
   id: string; name: string; category: string; unit: string
   sale_price: number | null; cost_price: number | null
   is_sellable: boolean; track_inventory: boolean; is_active: boolean
+  tax_rate?: number
 }
 interface Comp { id: string; component_item_id: string; quantity: number; items?: { name: string; unit: string; cost_price: number | null } }
 interface Props {
@@ -24,7 +25,7 @@ const catLabel = (v: string) => CATS.find(c => c.value === v)?.label ?? v
 export default function ItemManager({ initialItems, dishCost, componentsByDish }: Props) {
   const router = useRouter()
   const [items, setItems] = useState(initialItems)
-  const [form, setForm] = useState({ name: '', category: 'ingredient', unit: '個', salePrice: '', costPrice: '', isSellable: false, trackInventory: true })
+  const [form, setForm] = useState({ name: '', category: 'ingredient', unit: '個', salePrice: '', costPrice: '', isSellable: false, trackInventory: true, taxRate: '0.10' })
   const [error, setError] = useState<string | null>(null)
   const [filter, setFilter] = useState('all')
   const ingredients = items.filter(i => i.is_active).map(i => ({ id: i.id, name: i.name, category: i.category, unit: i.unit }))
@@ -38,12 +39,13 @@ export default function ItemManager({ initialItems, dishCost, componentsByDish }
         salePrice: form.salePrice === '' ? null : Number(form.salePrice),
         costPrice: form.costPrice === '' ? null : Number(form.costPrice),
         isSellable: form.isSellable, trackInventory: form.trackInventory,
+        taxRate: Number(form.taxRate),
       }),
     })
     const json = await res.json()
     if (!res.ok) { setError(json.error ?? '追加に失敗しました'); return }
     setItems(i => [...i, json.item])
-    setForm({ name: '', category: 'ingredient', unit: '個', salePrice: '', costPrice: '', isSellable: false, trackInventory: true })
+    setForm({ name: '', category: 'ingredient', unit: '個', salePrice: '', costPrice: '', isSellable: false, trackInventory: true, taxRate: '0.10' })
     router.refresh()
   }
 
@@ -54,6 +56,7 @@ export default function ItemManager({ initialItems, dishCost, componentsByDish }
         name: it.name, category: it.category, unit: it.unit,
         salePrice: it.sale_price, costPrice: it.cost_price,
         isSellable: it.is_sellable, trackInventory: it.track_inventory,
+        taxRate: it.tax_rate ?? 0.10,
         isActive: !it.is_active,
       }),
     })
@@ -89,9 +92,17 @@ export default function ItemManager({ initialItems, dishCost, componentsByDish }
           <input type="number" value={form.costPrice} onChange={e => setForm({ ...form, costPrice: e.target.value })} placeholder="原価"
             className="border border-warm-200 rounded-lg px-3 py-2 text-sm text-right" />
         </div>
-        <div className="flex gap-4 mt-2 text-sm text-warm-600">
+        <div className="flex gap-4 mt-2 text-sm text-warm-600 flex-wrap items-center">
           <label className="flex items-center gap-1"><input type="checkbox" checked={form.isSellable} onChange={e => setForm({ ...form, isSellable: e.target.checked })} /> 販売可</label>
           <label className="flex items-center gap-1"><input type="checkbox" checked={form.trackInventory} onChange={e => setForm({ ...form, trackInventory: e.target.checked })} /> 在庫管理</label>
+          <label className="flex items-center gap-1">消費税
+            <select value={form.taxRate} onChange={e => setForm({ ...form, taxRate: e.target.value })}
+              className="border border-warm-200 rounded px-2 py-1 text-xs">
+              <option value="0.10">10%（標準）</option>
+              <option value="0.08">8%（軽減）</option>
+              <option value="0">非課税</option>
+            </select>
+          </label>
         </div>
         <button onClick={add} className="mt-3 bg-warm-500 hover:bg-warm-600 text-white font-bold px-4 py-2 rounded-lg text-sm">追加</button>
       </div>
@@ -111,6 +122,11 @@ export default function ItemManager({ initialItems, dishCost, componentsByDish }
                   <span className="text-xs bg-warm-100 text-warm-600 px-2 py-0.5 rounded-full">{catLabel(it.category)}</span>
                   {it.is_sellable && <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">販売可</span>}
                   {it.track_inventory && <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">在庫</span>}
+                  {typeof it.tax_rate === 'number' && (
+                    <span className="text-xs bg-warm-100 text-warm-600 px-2 py-0.5 rounded-full">
+                      税{Math.round(it.tax_rate * 100)}%
+                    </span>
+                  )}
                 </div>
                 <p className="text-warm-500 text-sm mt-1">
                   単位 {it.unit}

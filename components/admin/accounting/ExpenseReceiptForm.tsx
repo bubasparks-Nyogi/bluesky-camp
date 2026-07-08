@@ -1,5 +1,6 @@
 'use client'
 import { useMemo, useState } from 'react'
+import { taxFromIncluded } from '@/lib/tax'
 
 interface AccountOpt { id: string; code: string; name: string }
 interface ItemOpt { id: string; name: string; unit: string; category: string; trackInventory: boolean }
@@ -26,10 +27,11 @@ interface LineRow {
   unitPrice: string
   subtotal: string
   accountCode: string
+  taxRate: string    // "0.10" | "0.08" | "0"
 }
 
 interface OcrDraftItem {
-  name: string; qty: number; unitPrice: number; subtotal: number; accountCode: string
+  name: string; qty: number; unitPrice: number; subtotal: number; accountCode: string; taxRate?: number
 }
 interface OcrDraft {
   date?: string; amount?: number; vendor?: string; suggestedAccountCode?: string
@@ -40,8 +42,8 @@ const LS_KEY = 'expense_last_credit_account'
 
 const uid = () => Math.random().toString(36).slice(2, 10)
 
-const emptyRow = (accountCode = ''): LineRow => ({
-  key: uid(), itemId: '', itemName: '', qty: '1', unitPrice: '', subtotal: '', accountCode,
+const emptyRow = (accountCode = '', taxRate = '0.10'): LineRow => ({
+  key: uid(), itemId: '', itemName: '', qty: '1', unitPrice: '', subtotal: '', accountCode, taxRate,
 })
 
 export default function ExpenseReceiptForm({ expenseAccounts, paymentAccounts, itemMaster }: Props) {
@@ -66,10 +68,23 @@ export default function ExpenseReceiptForm({ expenseAccounts, paymentAccounts, i
   const [driveLoading, setDriveLoading] = useState(false)
   const [driveImporting, setDriveImporting] = useState<string | null>(null)
 
-  const total = useMemo(
-    () => lines.reduce((sum, l) => sum + (Number(l.subtotal) || 0), 0),
-    [lines],
-  )
+  const totals = useMemo(() => {
+    let total = 0, tax = 0
+    const taxByRate = new Map<string, number>()
+    for (const l of lines) {
+      const sub = Number(l.subtotal) || 0
+      const rate = Number(l.taxRate) || 0
+      const t = taxFromIncluded(sub, rate)
+      total += sub
+      tax += t
+      if (t > 0) {
+        const key = `${Math.round(rate * 100)}%`
+        taxByRate.set(key, (taxByRate.get(key) ?? 0) + t)
+      }
+    }
+    return { total, tax, excl: total - tax, taxByRate }
+  }, [lines])
+  const total = totals.total
 
   const onPick = (f: File | null) => {
     setFile(f); setError(null); setDone(null); setSourceName(null)
@@ -107,13 +122,13 @@ export default function ExpenseReceiptForm({ expenseAccounts, paymentAccounts, i
         unitPrice: it.unitPrice ? String(it.unitPrice) : '',
         subtotal: String(it.subtotal || 0),
         accountCode: it.accountCode || fallbackCode,
+        taxRate: String(it.taxRate ?? 0.10),
       })))
     } else if (d.amount && d.amount > 0) {
-      // 明細抽出できないが合計は取れた: 1行に集約
       setLines([{
         key: uid(), itemId: '', itemName: d.vendor || 'レシート',
         qty: '1', unitPrice: String(d.amount), subtotal: String(d.amount),
-        accountCode: fallbackCode,
+        accountCode: fallbackCode, taxRate: '0.10',
       }])
     } else {
       setLines([emptyRow(fallbackCode)])
@@ -188,6 +203,7 @@ export default function ExpenseReceiptForm({ expenseAccounts, paymentAccounts, i
           unitPrice: l.unitPrice ? Number(l.unitPrice) : null,
           subtotal: Number(l.subtotal),
           accountCode: l.accountCode,
+          taxRate: Number(l.taxRate) || 0,
         }))
       if (items.length === 0) { setError('明細を1件以上入力してください'); return }
       if (items.some(i => !i.accountCode)) { setError('全ての明細に費用科目を設定してください'); return }
@@ -306,12 +322,14 @@ export default function ExpenseReceiptForm({ expenseAccounts, paymentAccounts, i
               <table className="w-full text-xs border border-warm-100">
                 <thead className="bg-warm-50 text-warm-500">
                   <tr>
-                    <th className="px-2 py-1.5 text-left font-normal min-w-[140px]">商品名</th>
+                    <th className="px-2 py-1.5 text-left font-normal min-w-[130px]">商品名</th>
                     <th className="px-2 py-1.5 text-right font-normal w-14">数量</th>
                     <th className="px-2 py-1.5 text-right font-normal w-20">単価</th>
-                    <th className="px-2 py-1.5 text-right font-normal w-20">小計</th>
-                    <th className="px-2 py-1.5 text-left font-normal min-w-[110px]">費用科目</th>
-                    <th className="px-2 py-1.5 text-left font-normal min-w-[130px]">商品マスタ紐付け</th>
+                    <th className="px-2 py-1.5 text-right font-normal w-20">税込小計</th>
+                    <th className="px-2 py-1.5 text-center font-normal w-16">税率</th>
+                    <th className="px-2 py-1.5 text-right font-normal w-16">消費税</th>
+                    <th className="px-2 py-1.5 text-left font-normal min-w-[100px]">費用科目</th>
+                    <th className="px-2 py-1.5 text-left font-normal min-w-[120px]">商品マスタ紐付け</th>
                     <th className="px-2 py-1.5 w-8"></th>
                   </tr>
                 </thead>
@@ -344,6 +362,18 @@ export default function ExpenseReceiptForm({ expenseAccounts, paymentAccounts, i
                           className="w-full border border-warm-200 rounded px-1 py-1 text-xs text-right font-bold" />
                       </td>
                       <td className="px-1 py-1">
+                        <select value={l.taxRate}
+                          onChange={e => updateLine(l.key, { taxRate: e.target.value })}
+                          className="w-full border border-warm-200 rounded px-1 py-1 text-xs">
+                          <option value="0.10">10%</option>
+                          <option value="0.08">8%</option>
+                          <option value="0">非課税</option>
+                        </select>
+                      </td>
+                      <td className="px-1 py-1 text-right text-warm-500 text-xs tabular-nums">
+                        ¥{taxFromIncluded(Number(l.subtotal) || 0, Number(l.taxRate) || 0).toLocaleString()}
+                      </td>
+                      <td className="px-1 py-1">
                         <select value={l.accountCode}
                           onChange={e => updateLine(l.key, { accountCode: e.target.value })}
                           className="w-full border border-warm-200 rounded px-1 py-1 text-xs">
@@ -372,14 +402,33 @@ export default function ExpenseReceiptForm({ expenseAccounts, paymentAccounts, i
                 </tbody>
                 <tfoot className="bg-warm-50">
                   <tr className="border-t border-warm-200">
-                    <td colSpan={3} className="px-2 py-2 text-right text-warm-500">合計</td>
-                    <td className="px-2 py-2 text-right font-bold text-warm-700">¥{total.toLocaleString()}</td>
-                    <td colSpan={3}></td>
+                    <td colSpan={3} className="px-2 py-2 text-right text-warm-500">税抜合計</td>
+                    <td className="px-2 py-2 text-right text-warm-600 tabular-nums">¥{totals.excl.toLocaleString()}</td>
+                    <td colSpan={5}></td>
+                  </tr>
+                  <tr>
+                    <td colSpan={3} className="px-2 py-1 text-right text-warm-500">消費税{' '}
+                      {Array.from(totals.taxByRate.entries()).length > 0 && (
+                        <span className="text-[10px]">
+                          ({Array.from(totals.taxByRate.entries()).map(([r, a]) => `${r}: ¥${a.toLocaleString()}`).join(' / ')})
+                        </span>
+                      )}
+                    </td>
+                    <td className="px-2 py-1 text-right text-warm-600 tabular-nums">¥{totals.tax.toLocaleString()}</td>
+                    <td colSpan={5}></td>
+                  </tr>
+                  <tr className="border-t border-warm-200">
+                    <td colSpan={3} className="px-2 py-2 text-right font-bold text-warm-600">税込合計</td>
+                    <td className="px-2 py-2 text-right font-bold text-warm-700 tabular-nums">¥{totals.total.toLocaleString()}</td>
+                    <td colSpan={5}></td>
                   </tr>
                 </tfoot>
               </table>
             </div>
-            <p className="text-[10px] text-warm-400 mt-1">📦 = 在庫追跡対象。紐付けると仕入時に在庫が自動加算されます。</p>
+            <p className="text-[10px] text-warm-400 mt-1">
+              📦 = 在庫追跡対象。紐付けると仕入時に在庫が自動加算されます。<br />
+              💡 消費税は記録のみ（免税事業者のため税込経理を維持）。課税事業者移行後に還付計算へ利用します。
+            </p>
           </div>
 
           <div>

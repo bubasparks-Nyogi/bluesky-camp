@@ -3,6 +3,7 @@ import { supabaseAdmin } from '@/lib/supabase'
 import { createSupabaseServerClient } from '@/lib/supabase-server'
 import { validateApprove } from '@/lib/admin/validateApprove'
 import { audit } from '@/lib/security/auditLog'
+import { normalizeTaxRate, taxFromIncluded } from '@/lib/tax'
 
 export async function POST(_req: NextRequest, { params }: { params: { id: string } }) {
   const supabase = createSupabaseServerClient()
@@ -17,11 +18,15 @@ export async function POST(_req: NextRequest, { params }: { params: { id: string
   if (!validation.ok) return NextResponse.json({ error: validation.message }, { status: validation.httpStatus })
 
   const { data: item } = await supabaseAdmin
-    .from('items').select('id, name, sale_price, is_sellable, is_active').eq('id', draft.item_id).maybeSingle()
+    .from('items').select('id, name, sale_price, is_sellable, is_active, tax_rate').eq('id', draft.item_id).maybeSingle()
   if (!item)                     return NextResponse.json({ error: '品目が見つかりません' }, { status: 404 })
   if (item.is_sellable !== true) return NextResponse.json({ error: '販売不可の品目です' }, { status: 400 })
   const unitPrice = draft.unit_price ?? item.sale_price
   if (unitPrice == null)         return NextResponse.json({ error: '単価が未設定です' }, { status: 400 })
+
+  const taxRate = normalizeTaxRate(item.tax_rate)
+  const subtotal = Math.round(Number(unitPrice) * Number(draft.quantity))
+  const taxAmount = taxFromIncluded(subtotal, taxRate)
 
   const { data: line, error: insErr } = await supabaseAdmin.from('sale_lines').insert({
     reservation_id: draft.reservation_id,
@@ -29,6 +34,8 @@ export async function POST(_req: NextRequest, { params }: { params: { id: string
     item_name: item.name,
     unit_price: unitPrice,
     quantity: Number(draft.quantity),
+    tax_rate: taxRate,
+    tax_amount: taxAmount,
     occurred_at: draft.occurred_at,
     note: `AI抽出: ${draft.item_name_raw}`,
   }).select().single()

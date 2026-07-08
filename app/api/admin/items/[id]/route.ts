@@ -3,6 +3,7 @@ import { supabaseAdmin } from '@/lib/supabase'
 import { createSupabaseServerClient } from '@/lib/supabase-server'
 import { validateItem } from '@/lib/items/validate'
 import type { ItemInput } from '@/lib/items/types'
+import { normalizeTaxRate } from '@/lib/tax'
 
 export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
   const supabase = createSupabaseServerClient()
@@ -21,6 +22,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     costPrice: body.costPrice == null ? null : Number(body.costPrice),
     isSellable: Boolean(body.isSellable),
     trackInventory: Boolean(body.trackInventory),
+    taxRate: normalizeTaxRate(body.taxRate),
   }
   const err = validateItem(input)
   if (err) return NextResponse.json({ error: err }, { status: 400 })
@@ -29,6 +31,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     name: input.name.trim(), category: input.category, unit: input.unit,
     sale_price: input.salePrice, cost_price: input.costPrice,
     is_sellable: input.isSellable, track_inventory: input.trackInventory,
+    tax_rate: input.taxRate,
   }
   if (body.isActive !== undefined) update.is_active = Boolean(body.isActive)
   if (body.sortOrder !== undefined && Number.isInteger(body.sortOrder)) update.sort_order = body.sortOrder

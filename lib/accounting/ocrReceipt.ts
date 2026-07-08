@@ -1,4 +1,5 @@
 import type { JournalEntryInput } from './types'
+import { normalizeTaxRate, type TaxRate } from '@/lib/tax'
 
 export interface OcrDraftItem {
   name: string
@@ -6,6 +7,7 @@ export interface OcrDraftItem {
   unitPrice: number
   subtotal: number
   accountCode: string
+  taxRate: TaxRate
 }
 
 export interface OcrDraft {
@@ -83,7 +85,8 @@ function parseItems(raw: unknown, validCodes: string[]): OcrDraftItem[] {
     if (subtotal <= 0) continue
     const codeRaw = typeof o.accountCode === 'string' ? o.accountCode : ''
     const accountCode = validCodes.includes(codeRaw) ? codeRaw : ''
-    out.push({ name, qty, unitPrice, subtotal, accountCode })
+    const taxRate = normalizeTaxRate(o.taxRate)
+    out.push({ name, qty, unitPrice, subtotal, accountCode, taxRate })
   }
   return out
 }

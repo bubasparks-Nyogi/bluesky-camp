@@ -4,6 +4,7 @@ import { createSupabaseServerClient } from '@/lib/supabase-server'
 import { validateItem } from '@/lib/items/validate'
 import { computeDishCost } from '@/lib/items/cost'
 import type { ItemInput } from '@/lib/items/types'
+import { normalizeTaxRate } from '@/lib/tax'
 
 export async function GET() {
   const supabase = createSupabaseServerClient()
@@ -46,6 +47,7 @@ export async function POST(req: NextRequest) {
     costPrice: body.costPrice == null ? null : Number(body.costPrice),
     isSellable: Boolean(body.isSellable),
     trackInventory: Boolean(body.trackInventory),
+    taxRate: normalizeTaxRate(body.taxRate),
   }
   const err = validateItem(input)
   if (err) return NextResponse.json({ error: err }, { status: 400 })
@@ -54,6 +56,7 @@ export async function POST(req: NextRequest) {
     name: input.name.trim(), category: input.category, unit: input.unit,
     sale_price: input.salePrice, cost_price: input.costPrice,
     is_sellable: input.isSellable, track_inventory: input.trackInventory,
+    tax_rate: input.taxRate,
     sort_order: Number.isInteger(body.sortOrder) ? body.sortOrder : 0,
   }).select().single()
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })

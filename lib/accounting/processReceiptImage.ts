@@ -73,11 +73,14 @@ export async function processReceiptImage(
             fileBlock,
             { type: 'text', text:
               `このレシートから次をJSONで返してください:\n` +
-              `{"date":"YYYY-MM-DD","amount":整数の合計金額,"vendor":"店名","accountCode":"最頻の費用科目コード","confidence":"low|medium|high","items":[{"name":"商品名","qty":数量,"unitPrice":単価整数,"subtotal":小計整数,"accountCode":"費用科目コード"}]}\n` +
+              `{"date":"YYYY-MM-DD","amount":整数の合計金額,"vendor":"店名","accountCode":"最頻の費用科目コード","confidence":"low|medium|high","items":[{"name":"商品名","qty":数量,"unitPrice":単価整数,"subtotal":小計整数,"accountCode":"費用科目コード","taxRate":0.10または0.08または0}]}\n` +
               `費用科目の候補: ${candidates}\n\n` +
               `【items 抽出ルール】\n` +
               `- レシートに記載されている全商品を1行1オブジェクトで返す（値引き行・小計行は除外）\n` +
               `- qty が読めない場合は 1、unitPrice が読めない場合は subtotal と同じ値\n` +
+              `- 金額はすべて税込。taxRate は 0.10（標準）/0.08（軽減）/0（非課税・免税）で必ず1つ返す\n` +
+              `- 軽減税率判定: 商品名に「※」「＊」印がある / 食料品・飲料（酒類除く）→ 0.08\n` +
+              `- 標準税率: 洗剤・文具・薪・炭・日用品・酒類・外食 → 0.10\n` +
               `- 各行の accountCode は下記の分類ルールで判定（品目の用途で決める）\n\n` +
               `【当キャンプ場の費用科目分類ルール（重要）】\n` +
               `- 食料品・飲料・食材・肉・野菜・米・氷・酒類 → 「仕入高」(501)（お客様に販売・提供する原価）\n` +

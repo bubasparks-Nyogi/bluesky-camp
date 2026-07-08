@@ -3,6 +3,7 @@ import { supabaseAdmin } from '@/lib/supabase'
 import { createSupabaseServerClient } from '@/lib/supabase-server'
 import { buildExpenseEntry, buildExpenseEntryFromLines } from '@/lib/accounting/ocrReceipt'
 import { validateEntry } from '@/lib/accounting/validateEntry'
+import { normalizeTaxRate, taxFromIncluded } from '@/lib/tax'
 
 interface PurchaseLineBody {
   itemId?: string | null
@@ -11,6 +12,7 @@ interface PurchaseLineBody {
   unitPrice?: number | null
   subtotal: number
   accountCode: string
+  taxRate?: number
 }
 
 export async function POST(req: NextRequest) {
@@ -89,17 +91,22 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: linesErr.message }, { status: 500 })
     }
 
-    // purchase_lines 挿入
-    const plRows = items!.map(it => ({
-      journal_entry_id: header.id,
-      item_id: it.itemId || null,
-      item_name: it.itemName.trim(),
-      quantity: it.quantity,
-      unit_price: it.unitPrice ?? null,
-      subtotal: it.subtotal,
-      account_code: it.accountCode,
-      occurred_at: date,
-    }))
+    // purchase_lines 挿入（税額はサーバ側で確定計算）
+    const plRows = items!.map(it => {
+      const taxRate = normalizeTaxRate(it.taxRate)
+      return {
+        journal_entry_id: header.id,
+        item_id: it.itemId || null,
+        item_name: it.itemName.trim(),
+        quantity: it.quantity,
+        unit_price: it.unitPrice ?? null,
+        subtotal: it.subtotal,
+        account_code: it.accountCode,
+        tax_rate: taxRate,
+        tax_amount: taxFromIncluded(it.subtotal, taxRate),
+        occurred_at: date,
+      }
+    })
     const { data: plInserted, error: plErr } = await supabaseAdmin
       .from('purchase_lines').insert(plRows).select('id, item_id, quantity, occurred_at')
     if (plErr) {

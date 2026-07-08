@@ -8,6 +8,7 @@ export interface ItemInput {
   costPrice: number | null
   isSellable: boolean
   trackInventory: boolean
+  taxRate?: number
 }
 
 export interface ComponentCostLine {

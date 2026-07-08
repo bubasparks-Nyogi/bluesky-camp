@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 import { createSupabaseServerClient } from '@/lib/supabase-server'
-import { listPhotoFiles } from '@/lib/google/driveClient'
+import { listPhotoFiles, isImageFile } from '@/lib/google/driveClient'
 
 type Section = 'hero' | 'facilities'
 const isValidSection = (s: string | null): s is Section => s === 'hero' || s === 'facilities'
@@ -16,12 +16,23 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'section は hero または facilities のみ' }, { status: 400 })
 
   try {
-    const files = await listPhotoFiles(section)
+    const allFiles = await listPhotoFiles(section)
+    const imageFiles = allFiles.filter(isImageFile)
+
     const { data: imported } = await supabaseAdmin
       .from('drive_photo_imports').select('drive_file_id').eq('section', section)
     const importedSet = new Set((imported ?? []).map(r => r.drive_file_id as string))
+
     return NextResponse.json({
-      files: files.map(f => ({ ...f, imported: importedSet.has(f.id) })),
+      files: imageFiles.map(f => ({ ...f, imported: importedSet.has(f.id) })),
+      diagnostics: {
+        totalInFolder: allFiles.length,
+        imageMatched:  imageFiles.length,
+        nonImageSample: allFiles
+          .filter(f => !isImageFile(f))
+          .slice(0, 5)
+          .map(f => ({ name: f.name, mimeType: f.mimeType })),
+      },
     })
   } catch (e) {
     const detail = e instanceof Error ? e.message : String(e)

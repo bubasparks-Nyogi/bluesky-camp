@@ -39,6 +39,7 @@ export default function PhotoManager({ initialPhotos }: Props) {
   const [driveLoading, setDriveLoading] = useState(false)
   const [driveImporting, setDriveImporting] = useState<string | null>(null)
   const [drivePreview, setDrivePreview] = useState<string | null>(null)
+  const [driveDiag, setDriveDiag] = useState<{ totalInFolder: number; imageMatched: number; nonImageSample: { name: string; mimeType: string }[] } | null>(null)
 
   const heroPhotos     = photos.filter(p => p.section === 'hero')
   const facilityPhotos = photos.filter(p => p.section === 'facilities')
@@ -98,12 +99,13 @@ export default function PhotoManager({ initialPhotos }: Props) {
   }
 
   const openDrive = async (s: Section) => {
-    setDriveSection(s); setError(null); setDriveFiles(null); setDriveLoading(true)
+    setDriveSection(s); setError(null); setDriveFiles(null); setDriveDiag(null); setDriveLoading(true)
     try {
       const res = await fetch(`/api/admin/drive-photos?section=${s}`)
       const json = await res.json()
       if (!res.ok) { setError(json.error ?? 'Drive の取得に失敗しました'); setDriveSection(null); return }
       setDriveFiles(json.files ?? [])
+      setDriveDiag(json.diagnostics ?? null)
     } finally { setDriveLoading(false) }
   }
 
@@ -240,7 +242,34 @@ export default function PhotoManager({ initialPhotos }: Props) {
             {driveLoading ? (
               <p className="p-8 text-center text-warm-400 text-sm">取得中...</p>
             ) : !driveFiles || driveFiles.length === 0 ? (
-              <p className="p-8 text-center text-warm-400 text-sm">フォルダに画像がありません（サービスアカウントへの共有と env 設定を確認してください）</p>
+              <div className="p-6 space-y-3">
+                <p className="text-center text-warm-500 text-sm">画像として認識できるファイルがありません</p>
+                {driveDiag && (
+                  <div className="bg-warm-50 border border-warm-100 rounded-lg p-3 text-xs space-y-1">
+                    <p className="text-warm-600 font-bold">診断情報</p>
+                    <p>フォルダ内総ファイル数: <span className="tabular-nums">{driveDiag.totalInFolder}</span></p>
+                    <p>画像として認識: <span className="tabular-nums">{driveDiag.imageMatched}</span></p>
+                    {driveDiag.nonImageSample.length > 0 && (
+                      <div className="pt-1">
+                        <p className="text-warm-500">画像以外のファイル例（最大5件）:</p>
+                        <ul className="ml-3 text-warm-600">
+                          {driveDiag.nonImageSample.map((f, i) => (
+                            <li key={i}>・{f.name} <span className="text-warm-400">({f.mimeType || '不明'})</span></li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                    {driveDiag.totalInFolder === 0 && (
+                      <p className="text-warm-500 pt-1">
+                        原因候補:<br />
+                        • フォルダ ID が違う（env の値を再確認）<br />
+                        • サービスアカウントに共有していない<br />
+                        • フォルダが空、またはサブフォルダ内にのみ画像がある（サブフォルダは辿りません）
+                      </p>
+                    )}
+                  </div>
+                )}
+              </div>
             ) : (
               <div className="flex-1 overflow-y-auto p-3">
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">

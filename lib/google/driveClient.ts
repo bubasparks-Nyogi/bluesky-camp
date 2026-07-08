@@ -87,12 +87,19 @@ export async function listReceiptFiles(): Promise<DriveFile[]> {
   return listFolderFiles(folderId, `mimeType contains 'image/' or mimeType='application/pdf'`)
 }
 
-/** 写真セクション名 → env 変数のフォルダ ID を解決して一覧取得。 */
+/** 写真セクション名 → env 変数のフォルダ ID を解決して一覧取得。
+ * Drive for Desktop からアップした画像は mime が octet-stream 等になることがあるため、
+ * サーバ側フィルタは緩め（trashed=false のみ）にして、呼び出し側で mime または拡張子で絞る。 */
 export async function listPhotoFiles(section: 'hero' | 'facilities'): Promise<DriveFile[]> {
   const envKey = section === 'hero' ? 'GOOGLE_DRIVE_HERO_FOLDER_ID' : 'GOOGLE_DRIVE_FACILITIES_FOLDER_ID'
   const folderId = process.env[envKey]
   if (!folderId) throw new Error(`${envKey} が未設定です`)
-  return listFolderFiles(folderId, `mimeType contains 'image/'`)
+  return listFolderFiles(folderId, `mimeType != 'application/vnd.google-apps.folder'`)
+}
+
+export function isImageFile(f: { name: string; mimeType: string }): boolean {
+  if (f.mimeType && /^image\//.test(f.mimeType)) return true
+  return /\.(png|jpe?g|webp|gif|bmp|heic|heif)$/i.test(f.name)
 }
 
 export async function downloadFile(fileId: string): Promise<{ bytes: Buffer; mimeType: string }> {

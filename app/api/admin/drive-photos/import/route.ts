@@ -25,14 +25,26 @@ export async function POST(req: NextRequest) {
     const { bytes, mimeType } = await downloadFile(body.fileId)
     if (bytes.length > MAX_BYTES)
       return NextResponse.json({ error: 'ファイルサイズが大きすぎます（10MBまで）' }, { status: 413 })
-    if (!/^image\//.test(mimeType))
+    // Drive for Desktop 経由の画像は mime が octet-stream になることがあるため、
+    // ファイル名の拡張子でも許可判定する。
+    const isImageMime = /^image\//.test(mimeType)
+    const nameExtMatch = (body.fileName ?? '').match(/\.(png|jpe?g|webp|gif|bmp|heic|heif)$/i)
+    if (!isImageMime && !nameExtMatch)
       return NextResponse.json({ error: '画像ファイルのみ取り込めます' }, { status: 400 })
 
-    const ext = (mimeType.split('/')[1] || 'jpg').replace('jpeg', 'jpg')
+    const extFromName = nameExtMatch?.[1]?.toLowerCase().replace('jpeg', 'jpg')
+    const ext = (isImageMime
+      ? (mimeType.split('/')[1] || 'jpg').replace('jpeg', 'jpg')
+      : (extFromName || 'jpg'))
+    const storeMime = isImageMime ? mimeType
+      : extFromName === 'png' ? 'image/png'
+      : extFromName === 'webp' ? 'image/webp'
+      : extFromName === 'gif' ? 'image/gif'
+      : 'image/jpeg'
     const filename = `drive-${section}-${Date.now()}.${ext}`
 
     const { error: upErr } = await supabaseAdmin.storage.from('photos').upload(filename, bytes, {
-      contentType: mimeType, upsert: false,
+      contentType: storeMime, upsert: false,
     })
     if (upErr) return NextResponse.json({ error: `画像の保存に失敗しました: ${upErr.message}` }, { status: 500 })
 

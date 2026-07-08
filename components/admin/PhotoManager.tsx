@@ -11,6 +11,16 @@ interface Photo {
   sort_order: number
 }
 
+interface DriveFile {
+  id: string
+  name: string
+  mimeType: string
+  createdTime: string
+  imported: boolean
+}
+
+type Section = 'hero' | 'facilities'
+
 interface Props {
   initialPhotos: Photo[]
 }
@@ -18,10 +28,17 @@ interface Props {
 export default function PhotoManager({ initialPhotos }: Props) {
   const [photos,    setPhotos]    = useState<Photo[]>(initialPhotos)
   const [uploading, setUploading] = useState(false)
-  const [section,   setSection]   = useState<'hero' | 'facilities'>('hero')
+  const [section,   setSection]   = useState<Section>('hero')
   const [caption,   setCaption]   = useState('')
   const [error,     setError]     = useState<string | null>(null)
   const fileRef = useRef<HTMLInputElement>(null)
+
+  // Google Drive 取込
+  const [driveSection, setDriveSection] = useState<Section | null>(null)
+  const [driveFiles, setDriveFiles] = useState<DriveFile[] | null>(null)
+  const [driveLoading, setDriveLoading] = useState(false)
+  const [driveImporting, setDriveImporting] = useState<string | null>(null)
+  const [drivePreview, setDrivePreview] = useState<string | null>(null)
 
   const heroPhotos     = photos.filter(p => p.section === 'hero')
   const facilityPhotos = photos.filter(p => p.section === 'facilities')
@@ -78,6 +95,32 @@ export default function PhotoManager({ initialPhotos }: Props) {
       p.id === a.id ? { ...p, sort_order: b.sort_order } :
       p.id === b.id ? { ...p, sort_order: a.sort_order } : p
     ))
+  }
+
+  const openDrive = async (s: Section) => {
+    setDriveSection(s); setError(null); setDriveFiles(null); setDriveLoading(true)
+    try {
+      const res = await fetch(`/api/admin/drive-photos?section=${s}`)
+      const json = await res.json()
+      if (!res.ok) { setError(json.error ?? 'Drive の取得に失敗しました'); setDriveSection(null); return }
+      setDriveFiles(json.files ?? [])
+    } finally { setDriveLoading(false) }
+  }
+
+  const importFromDrive = async (f: DriveFile) => {
+    if (!driveSection) return
+    if (f.imported && !confirm(`「${f.name}」は取込済みです。もう一度取り込みますか？（重複表示にご注意）`)) return
+    setDriveImporting(f.id); setError(null)
+    try {
+      const res = await fetch('/api/admin/drive-photos/import', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fileId: f.id, fileName: f.name, section: driveSection }),
+      })
+      const json = await res.json()
+      if (!res.ok) { setError(json.error ?? '取込に失敗しました'); return }
+      setPhotos(prev => [...prev, json.photo])
+      setDriveFiles(prev => prev?.map(x => x.id === f.id ? { ...x, imported: true } : x) ?? null)
+    } finally { setDriveImporting(null) }
   }
 
   const PhotoGrid = ({ items, sectionKey }: { items: Photo[], sectionKey: string }) => (
@@ -156,7 +199,13 @@ export default function PhotoManager({ initialPhotos }: Props) {
 
       {/* Hero 写真一覧 */}
       <div>
-        <h3 className="font-bold text-warm-700 mb-1">Hero（トップ背景）— {heroPhotos.length}枚</h3>
+        <div className="flex items-center justify-between mb-1">
+          <h3 className="font-bold text-warm-700">Hero（トップ背景）— {heroPhotos.length}枚</h3>
+          <button onClick={() => openDrive('hero')}
+            className="text-xs bg-warm-100 hover:bg-warm-200 text-warm-700 font-bold px-3 py-1.5 rounded-lg">
+            📁 Driveから取込
+          </button>
+        </div>
         <p className="text-xs text-warm-400 mb-2">写真が0枚の場合はデフォルト画像が表示されます</p>
         {heroPhotos.length === 0
           ? <p className="text-warm-400 text-sm bg-warm-50 rounded-xl p-4 text-center">写真がありません</p>
@@ -165,11 +214,69 @@ export default function PhotoManager({ initialPhotos }: Props) {
 
       {/* Facilities 写真一覧 */}
       <div>
-        <h3 className="font-bold text-warm-700 mb-1">設備紹介 — {facilityPhotos.length}枚</h3>
+        <div className="flex items-center justify-between mb-1">
+          <h3 className="font-bold text-warm-700">設備紹介 — {facilityPhotos.length}枚</h3>
+          <button onClick={() => openDrive('facilities')}
+            className="text-xs bg-warm-100 hover:bg-warm-200 text-warm-700 font-bold px-3 py-1.5 rounded-lg">
+            📁 Driveから取込
+          </button>
+        </div>
         {facilityPhotos.length === 0
           ? <p className="text-warm-400 text-sm bg-warm-50 rounded-xl p-4 text-center">写真がありません</p>
           : <PhotoGrid items={facilityPhotos} sectionKey="facilities" />}
       </div>
+
+      {/* Drive 取込モーダル */}
+      {driveSection && (
+        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" onClick={() => { setDriveSection(null); setDrivePreview(null) }}>
+          <div className="bg-white rounded-xl max-w-3xl w-full max-h-[85vh] overflow-hidden flex flex-col" onClick={e => e.stopPropagation()}>
+            <div className="px-4 py-3 border-b border-warm-100 flex items-center justify-between">
+              <span className="text-sm font-bold text-warm-700">
+                📁 Google Drive → {driveSection === 'hero' ? 'Hero（トップ背景）' : '設備紹介'} フォルダ
+              </span>
+              <button onClick={() => { setDriveSection(null); setDrivePreview(null) }} className="text-warm-400 hover:text-warm-600 text-xl leading-none">×</button>
+            </div>
+
+            {driveLoading ? (
+              <p className="p-8 text-center text-warm-400 text-sm">取得中...</p>
+            ) : !driveFiles || driveFiles.length === 0 ? (
+              <p className="p-8 text-center text-warm-400 text-sm">フォルダに画像がありません（サービスアカウントへの共有と env 設定を確認してください）</p>
+            ) : (
+              <div className="flex-1 overflow-y-auto p-3">
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                  {driveFiles.map(f => (
+                    <div key={f.id} className="border border-warm-100 rounded-lg overflow-hidden">
+                      <button onClick={() => setDrivePreview(`https://drive.google.com/thumbnail?id=${f.id}&sz=w400`)}
+                        className="block w-full aspect-square bg-warm-50 hover:bg-warm-100 relative overflow-hidden">
+                        <img src={`https://drive.google.com/thumbnail?id=${f.id}&sz=w300`}
+                          alt={f.name} className="w-full h-full object-cover" loading="lazy" />
+                      </button>
+                      <div className="p-2">
+                        <p className="text-xs text-warm-700 truncate" title={f.name}>{f.name}</p>
+                        <p className="text-[10px] text-warm-400 mb-1.5">{f.createdTime.slice(0, 10)}</p>
+                        <button onClick={() => importFromDrive(f)}
+                          disabled={driveImporting !== null}
+                          className={`w-full text-xs font-bold py-1 rounded ${f.imported
+                            ? 'bg-green-100 text-green-700 hover:bg-green-200'
+                            : 'bg-warm-500 hover:bg-warm-600 text-white'} disabled:opacity-40`}>
+                          {driveImporting === f.id ? '取込中...' : f.imported ? '済 · 再取込' : '取り込む'}
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* 拡大プレビュー */}
+          {drivePreview && (
+            <div className="fixed inset-0 bg-black/70 z-[60] flex items-center justify-center p-4" onClick={() => setDrivePreview(null)}>
+              <img src={drivePreview} alt="preview" className="max-w-full max-h-full rounded-lg" />
+            </div>
+          )}
+        </div>
+      )}
     </div>
   )
 }

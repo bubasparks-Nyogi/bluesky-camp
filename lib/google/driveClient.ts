@@ -67,11 +67,10 @@ export interface DriveFile {
   createdTime: string
 }
 
-export async function listReceiptFiles(): Promise<DriveFile[]> {
-  const folderId = process.env.GOOGLE_DRIVE_RECEIPT_FOLDER_ID
-  if (!folderId) throw new Error('GOOGLE_DRIVE_RECEIPT_FOLDER_ID が未設定です')
+/** 指定フォルダ内のファイル一覧を取得（新しい順、最大 50 件）。 */
+async function listFolderFiles(folderId: string, mimeFilter: string): Promise<DriveFile[]> {
   const token = await getAccessToken()
-  const q = encodeURIComponent(`'${folderId}' in parents and trashed=false and (mimeType contains 'image/' or mimeType='application/pdf')`)
+  const q = encodeURIComponent(`'${folderId}' in parents and trashed=false and (${mimeFilter})`)
   const fields = encodeURIComponent('files(id,name,mimeType,createdTime)')
   const res = await fetch(
     `https://www.googleapis.com/drive/v3/files?q=${q}&fields=${fields}&orderBy=createdTime desc&pageSize=50`,
@@ -80,6 +79,20 @@ export async function listReceiptFiles(): Promise<DriveFile[]> {
   if (!res.ok) throw new Error(`Drive list failed: ${res.status}`)
   const json = await res.json() as { files: DriveFile[] }
   return json.files ?? []
+}
+
+export async function listReceiptFiles(): Promise<DriveFile[]> {
+  const folderId = process.env.GOOGLE_DRIVE_RECEIPT_FOLDER_ID
+  if (!folderId) throw new Error('GOOGLE_DRIVE_RECEIPT_FOLDER_ID が未設定です')
+  return listFolderFiles(folderId, `mimeType contains 'image/' or mimeType='application/pdf'`)
+}
+
+/** 写真セクション名 → env 変数のフォルダ ID を解決して一覧取得。 */
+export async function listPhotoFiles(section: 'hero' | 'facilities'): Promise<DriveFile[]> {
+  const envKey = section === 'hero' ? 'GOOGLE_DRIVE_HERO_FOLDER_ID' : 'GOOGLE_DRIVE_FACILITIES_FOLDER_ID'
+  const folderId = process.env[envKey]
+  if (!folderId) throw new Error(`${envKey} が未設定です`)
+  return listFolderFiles(folderId, `mimeType contains 'image/'`)
 }
 
 export async function downloadFile(fileId: string): Promise<{ bytes: Buffer; mimeType: string }> {

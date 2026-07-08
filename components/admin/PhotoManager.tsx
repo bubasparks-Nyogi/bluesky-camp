@@ -39,7 +39,16 @@ export default function PhotoManager({ initialPhotos }: Props) {
   const [driveLoading, setDriveLoading] = useState(false)
   const [driveImporting, setDriveImporting] = useState<string | null>(null)
   const [drivePreview, setDrivePreview] = useState<string | null>(null)
-  const [driveDiag, setDriveDiag] = useState<{ totalInFolder: number; imageMatched: number; nonImageSample: { name: string; mimeType: string }[] } | null>(null)
+  const [driveDiag, setDriveDiag] = useState<{
+    folderId?: string
+    folderMeta?: { id?: string; name?: string; mimeType?: string; error?: string }
+    totalEntries?: number
+    subfolders?: number
+    subfolderNames?: string[]
+    totalFiles?: number
+    imageMatched?: number
+    nonImageSample?: { name: string; mimeType: string }[]
+  } | null>(null)
 
   const heroPhotos     = photos.filter(p => p.section === 'hero')
   const facilityPhotos = photos.filter(p => p.section === 'facilities')
@@ -245,26 +254,53 @@ export default function PhotoManager({ initialPhotos }: Props) {
               <div className="p-6 space-y-3">
                 <p className="text-center text-warm-500 text-sm">画像として認識できるファイルがありません</p>
                 {driveDiag && (
-                  <div className="bg-warm-50 border border-warm-100 rounded-lg p-3 text-xs space-y-1">
+                  <div className="bg-warm-50 border border-warm-100 rounded-lg p-3 text-xs space-y-1.5">
                     <p className="text-warm-600 font-bold">診断情報</p>
-                    <p>フォルダ内総ファイル数: <span className="tabular-nums">{driveDiag.totalInFolder}</span></p>
+                    <p>参照フォルダ ID: <span className="font-mono text-[10px] break-all">{driveDiag.folderId || '(未設定)'}</span></p>
+                    <div>
+                      <p>フォルダアクセス:</p>
+                      {driveDiag.folderMeta?.error ? (
+                        <p className="text-red-500 ml-3">❌ 失敗: {driveDiag.folderMeta.error}</p>
+                      ) : (
+                        <p className="text-green-600 ml-3">✅ OK: 「{driveDiag.folderMeta?.name}」({driveDiag.folderMeta?.mimeType === 'application/vnd.google-apps.folder' ? 'フォルダ' : `フォルダではない: ${driveDiag.folderMeta?.mimeType}`})</p>
+                      )}
+                    </div>
+                    <p>フォルダ内エントリ総数: <span className="tabular-nums">{driveDiag.totalEntries}</span>（サブフォルダ {driveDiag.subfolders} / ファイル {driveDiag.totalFiles}）</p>
                     <p>画像として認識: <span className="tabular-nums">{driveDiag.imageMatched}</span></p>
-                    {driveDiag.nonImageSample.length > 0 && (
+                    {(driveDiag.subfolderNames?.length ?? 0) > 0 && (
+                      <div className="pt-1">
+                        <p className="text-warm-500">サブフォルダ例（最大5件・現状は辿りません）:</p>
+                        <ul className="ml-3 text-warm-600">
+                          {driveDiag.subfolderNames!.map((n, i) => <li key={i}>📁 {n}</li>)}
+                        </ul>
+                      </div>
+                    )}
+                    {(driveDiag.nonImageSample?.length ?? 0) > 0 && (
                       <div className="pt-1">
                         <p className="text-warm-500">画像以外のファイル例（最大5件）:</p>
                         <ul className="ml-3 text-warm-600">
-                          {driveDiag.nonImageSample.map((f, i) => (
+                          {driveDiag.nonImageSample!.map((f, i) => (
                             <li key={i}>・{f.name} <span className="text-warm-400">({f.mimeType || '不明'})</span></li>
                           ))}
                         </ul>
                       </div>
                     )}
-                    {driveDiag.totalInFolder === 0 && (
-                      <p className="text-warm-500 pt-1">
-                        原因候補:<br />
-                        • フォルダ ID が違う（env の値を再確認）<br />
-                        • サービスアカウントに共有していない<br />
-                        • フォルダが空、またはサブフォルダ内にのみ画像がある（サブフォルダは辿りません）
+                    {driveDiag.folderMeta?.error && (
+                      <p className="text-warm-500 pt-2 border-t border-warm-100">
+                        ❌ サービスアカウントがフォルダにアクセスできていません。<br />
+                        1. Drive で対象フォルダを右クリック → 共有 → サービスアカウントメール（レシートフォルダで使ったのと同じもの）を <strong>閲覧者</strong> 以上で追加<br />
+                        2. env の値と URL の <code>?id=</code> の値が一致しているか確認
+                      </p>
+                    )}
+                    {!driveDiag.folderMeta?.error && driveDiag.totalEntries === 0 && (
+                      <p className="text-warm-500 pt-2 border-t border-warm-100">
+                        アクセスは OK ですがフォルダが空です。Drive にファイルを追加してください。
+                      </p>
+                    )}
+                    {!driveDiag.folderMeta?.error && (driveDiag.totalEntries ?? 0) > 0 && driveDiag.imageMatched === 0 && (
+                      <p className="text-warm-500 pt-2 border-t border-warm-100">
+                        フォルダ内にファイルはあるが画像として認識できません。上記のファイル種別を確認してください。<br />
+                        サブフォルダ内にのみ画像がある場合は、直下に移動するか個別に共有してください（現在はサブフォルダを辿りません）。
                       </p>
                     )}
                   </div>

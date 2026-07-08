@@ -7,7 +7,7 @@ describe('parseOcrResult', () => {
   it('parses a clean JSON response', () => {
     const raw = JSON.stringify({ date: '2026-03-15', amount: 1200, vendor: 'コメリ', accountCode: '519', confidence: 'high' })
     expect(parseOcrResult(raw, CODES)).toEqual({
-      date: '2026-03-15', amount: 1200, vendor: 'コメリ', suggestedAccountCode: '519', confidence: 'high',
+      date: '2026-03-15', amount: 1200, vendor: 'コメリ', suggestedAccountCode: '519', confidence: 'high', items: [],
     })
   })
 
@@ -41,7 +41,7 @@ describe('parseOcrResult', () => {
 
   it('returns an all-empty draft for unparseable input (no throw)', () => {
     expect(parseOcrResult('totally not json', CODES)).toEqual({
-      date: '', amount: 0, vendor: '', suggestedAccountCode: '', confidence: '',
+      date: '', amount: 0, vendor: '', suggestedAccountCode: '', confidence: '', items: [],
     })
   })
 

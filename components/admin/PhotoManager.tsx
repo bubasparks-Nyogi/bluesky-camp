@@ -313,7 +313,7 @@ export default function PhotoManager({ initialPhotos }: Props) {
                     <div key={f.id} className="border border-warm-100 rounded-lg overflow-hidden">
                       <button onClick={() => setDrivePreview(`https://drive.google.com/thumbnail?id=${f.id}&sz=w400`)}
                         className="block w-full aspect-square bg-warm-50 hover:bg-warm-100 relative overflow-hidden">
-                        <img src={`https://drive.google.com/thumbnail?id=${f.id}&sz=w300`}
+                        <img src={`/api/admin/drive-photos/thumb?fileId=${f.id}`}
                           alt={f.name} className="w-full h-full object-cover" loading="lazy" />
                       </button>
                       <div className="p-2">

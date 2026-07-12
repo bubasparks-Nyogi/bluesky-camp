@@ -81,12 +81,34 @@ async function listFolderFiles(folderId: string, mimeFilter: string): Promise<Dr
   return json.files ?? []
 }
 
+const FOLDER_MIME = 'application/vnd.google-apps.folder'
+
+/** 指定フォルダを再帰的に辿り、全ファイル・全サブフォルダのエントリを返す。
+ * 月別サブフォルダに整理されているケース等に対応。深さは maxDepth で制限。 */
+async function listFolderFilesRecursive(rootId: string, maxDepth = 3): Promise<DriveFile[]> {
+  const out: DriveFile[] = []
+  async function walk(id: string, depth: number) {
+    const entries = await listFolderFiles(id, `trashed = false`)
+    for (const e of entries) out.push(e)
+    if (depth <= 0) return
+    const subs = entries.filter(e => e.mimeType === FOLDER_MIME)
+    for (const s of subs) await walk(s.id, depth - 1)
+  }
+  await walk(rootId, maxDepth)
+  return out
+}
+
 export async function listReceiptFiles(): Promise<DriveFile[]> {
   const folderId = process.env.GOOGLE_DRIVE_RECEIPT_FOLDER_ID
   if (!folderId) throw new Error('GOOGLE_DRIVE_RECEIPT_FOLDER_ID が未設定です')
   // Drive for Desktop 経由のファイルは mime が octet-stream になることがあるため、
   // サーバ側は trashed のみ除外し、フォルダも含めて返す。呼び出し側で isReceiptFile で絞る。
-  return listFolderFiles(folderId, `trashed = false`)
+  // 月別サブフォルダに整理されている場合も対応するため再帰取得（深さ 3 まで）。
+  const all = await listFolderFilesRecursive(folderId, 3)
+  // 新しい順にソートし最大 100 件
+  return all
+    .sort((a, b) => (b.createdTime ?? '').localeCompare(a.createdTime ?? ''))
+    .slice(0, 100)
 }
 
 export function isReceiptFile(f: { name: string; mimeType: string }): boolean {

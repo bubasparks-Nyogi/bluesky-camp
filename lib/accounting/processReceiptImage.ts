@@ -65,7 +65,7 @@ export async function processReceiptImage(
       const client = new Anthropic({ apiKey })
       const msg = await client.messages.create({
         model: OCR_MODEL,
-        max_tokens: 512,
+        max_tokens: 4096,
         system: '日本のレシート画像から経費情報を抽出するアシスタント。必ずJSONのみを返す。説明文は不要。',
         messages: [{
           role: 'user',

@@ -22,7 +22,22 @@ export async function POST(req: NextRequest) {
     if (bytes.length > OCR_MAX_IMAGE_BYTES)
       return NextResponse.json({ error: 'ファイルサイズが大きすぎます（10MBまで）' }, { status: 413 })
 
-    const { draft, receiptPath, previewUrl, ocrError, ocrRaw } = await processReceiptImage(bytes, mimeType)
+    // Drive Desktop 経由で mime が octet-stream 等になる場合、ファイル名の拡張子で補正。
+    const looksImageMime = /^image\//.test(mimeType)
+    const looksPdfMime = mimeType === 'application/pdf'
+    let effectiveMime = mimeType
+    if (!looksImageMime && !looksPdfMime) {
+      const extMatch = (body.fileName ?? '').match(/\.(png|jpe?g|webp|gif|pdf)$/i)
+      const ext = extMatch?.[1]?.toLowerCase()
+      effectiveMime = ext === 'pdf' ? 'application/pdf'
+        : ext === 'png' ? 'image/png'
+        : ext === 'webp' ? 'image/webp'
+        : ext === 'gif' ? 'image/gif'
+        : ext ? 'image/jpeg'
+        : mimeType
+    }
+
+    const { draft, receiptPath, previewUrl, ocrError, ocrRaw } = await processReceiptImage(bytes, effectiveMime)
 
     // 取込記録（二重計上防止マーク）。UNIQUE 制約なので再取込時は上書き。
     await supabaseAdmin.from('drive_receipt_imports').upsert({

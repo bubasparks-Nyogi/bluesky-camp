@@ -67,6 +67,16 @@ export default function ExpenseReceiptForm({ expenseAccounts, paymentAccounts, i
   const [driveFiles, setDriveFiles]   = useState<DriveFile[] | null>(null)
   const [driveLoading, setDriveLoading] = useState(false)
   const [driveImporting, setDriveImporting] = useState<string | null>(null)
+  const [driveDiag, setDriveDiag] = useState<{
+    folderId?: string
+    folderMeta?: { name?: string; mimeType?: string; error?: string }
+    totalEntries?: number
+    subfolders?: number
+    subfolderNames?: string[]
+    totalFiles?: number
+    receiptMatched?: number
+    nonReceiptSample?: { name: string; mimeType: string }[]
+  } | null>(null)
 
   const totals = useMemo(() => {
     let total = 0, tax = 0
@@ -156,7 +166,7 @@ export default function ExpenseReceiptForm({ expenseAccounts, paymentAccounts, i
   }
 
   const openDrive = async () => {
-    setDriveOpen(true); setError(null)
+    setDriveOpen(true); setError(null); setDriveDiag(null)
     if (driveFiles) return
     setDriveLoading(true)
     try {
@@ -164,6 +174,7 @@ export default function ExpenseReceiptForm({ expenseAccounts, paymentAccounts, i
       const json = await res.json()
       if (!res.ok) { setError(json.error ?? 'Drive の取得に失敗しました'); setDriveOpen(false); return }
       setDriveFiles(json.files ?? [])
+      setDriveDiag(json.diagnostics ?? null)
     } finally { setDriveLoading(false) }
   }
 
@@ -258,7 +269,43 @@ export default function ExpenseReceiptForm({ expenseAccounts, paymentAccounts, i
                 <button onClick={() => setDriveOpen(false)} className="text-warm-400 text-xs hover:text-warm-600">閉じる ✕</button>
               </div>
               {driveFiles.length === 0 ? (
-                <p className="px-3 py-4 text-center text-warm-400 text-sm">フォルダにファイルがありません</p>
+                <div className="p-4 space-y-2">
+                  <p className="text-center text-warm-500 text-sm">レシートとして認識できるファイルがありません</p>
+                  {driveDiag && (
+                    <div className="bg-warm-50 border border-warm-100 rounded-lg p-3 text-xs space-y-1.5">
+                      <p className="text-warm-600 font-bold">診断情報</p>
+                      <p>参照フォルダ ID: <span className="font-mono text-[10px] break-all">{driveDiag.folderId}</span></p>
+                      <div>
+                        <p>フォルダアクセス:</p>
+                        {driveDiag.folderMeta?.error ? (
+                          <p className="text-red-500 ml-3">❌ 失敗: {driveDiag.folderMeta.error}</p>
+                        ) : (
+                          <p className="text-green-600 ml-3">✅ OK: 「{driveDiag.folderMeta?.name}」</p>
+                        )}
+                      </div>
+                      <p>エントリ総数: <span className="tabular-nums">{driveDiag.totalEntries}</span>（サブフォルダ {driveDiag.subfolders} / ファイル {driveDiag.totalFiles}）</p>
+                      <p>レシートとして認識: <span className="tabular-nums">{driveDiag.receiptMatched}</span></p>
+                      {(driveDiag.subfolderNames?.length ?? 0) > 0 && (
+                        <div className="pt-1">
+                          <p className="text-warm-500">サブフォルダ例（辿りません）:</p>
+                          <ul className="ml-3 text-warm-600">
+                            {driveDiag.subfolderNames!.map((n, i) => <li key={i}>📁 {n}</li>)}
+                          </ul>
+                        </div>
+                      )}
+                      {(driveDiag.nonReceiptSample?.length ?? 0) > 0 && (
+                        <div className="pt-1">
+                          <p className="text-warm-500">レシート以外のファイル例:</p>
+                          <ul className="ml-3 text-warm-600">
+                            {driveDiag.nonReceiptSample!.map((f, i) => (
+                              <li key={i}>・{f.name} <span className="text-warm-400">({f.mimeType || '不明'})</span></li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
               ) : (
                 <div className="divide-y divide-warm-100 max-h-72 overflow-y-auto">
                   {driveFiles.map(f => (

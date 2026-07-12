@@ -84,7 +84,16 @@ async function listFolderFiles(folderId: string, mimeFilter: string): Promise<Dr
 export async function listReceiptFiles(): Promise<DriveFile[]> {
   const folderId = process.env.GOOGLE_DRIVE_RECEIPT_FOLDER_ID
   if (!folderId) throw new Error('GOOGLE_DRIVE_RECEIPT_FOLDER_ID が未設定です')
-  return listFolderFiles(folderId, `mimeType contains 'image/' or mimeType='application/pdf'`)
+  // Drive for Desktop 経由のファイルは mime が octet-stream になることがあるため、
+  // サーバ側は trashed のみ除外し、フォルダも含めて返す。呼び出し側で isReceiptFile で絞る。
+  return listFolderFiles(folderId, `trashed = false`)
+}
+
+export function isReceiptFile(f: { name: string; mimeType: string }): boolean {
+  if (f.mimeType === 'application/vnd.google-apps.folder') return false
+  if (f.mimeType && /^image\//.test(f.mimeType)) return true
+  if (f.mimeType === 'application/pdf') return true
+  return /\.(png|jpe?g|webp|gif|bmp|heic|heif|pdf)$/i.test(f.name)
 }
 
 /** 写真セクション名 → env 変数のフォルダ ID を解決して一覧取得。

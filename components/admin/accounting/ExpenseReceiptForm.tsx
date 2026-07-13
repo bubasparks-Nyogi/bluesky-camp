@@ -46,6 +46,22 @@ const emptyRow = (accountCode = '', taxRate = '0.10'): LineRow => ({
   key: uid(), itemId: '', itemName: '', qty: '1', unitPrice: '', subtotal: '', accountCode, taxRate,
 })
 
+/** レシートの商品名から、商品マスタの候補を推測して item.id を返す。見つからなければ空文字。
+ *  1) 正規化した完全一致 → 2) 一方が他方に含まれる部分一致 の順で優先。 */
+function matchItemMaster(name: string, itemMaster: ItemOpt[]): string {
+  const normalize = (s: string) => s.toLowerCase().replace(/\s|　/g, '').replace(/[()（）]/g, '')
+  const target = normalize(name)
+  if (!target) return ''
+  const exact = itemMaster.find(it => normalize(it.name) === target)
+  if (exact) return exact.id
+  const partial = itemMaster.find(it => {
+    const n = normalize(it.name)
+    if (n.length < 2) return false
+    return target.includes(n) || n.includes(target)
+  })
+  return partial?.id ?? ''
+}
+
 export default function ExpenseReceiptForm({ expenseAccounts, paymentAccounts, itemMaster }: Props) {
   const [file, setFile]         = useState<File | null>(null)
   const [preview, setPreview]   = useState<string | null>(null)
@@ -126,7 +142,7 @@ export default function ExpenseReceiptForm({ expenseAccounts, paymentAccounts, i
     if (items.length > 0) {
       setLines(items.map(it => ({
         key: uid(),
-        itemId: '',
+        itemId: matchItemMaster(it.name, itemMaster),   // 商品マスタと自動紐付け
         itemName: it.name,
         qty: String(it.qty || 1),
         unitPrice: it.unitPrice ? String(it.unitPrice) : '',
@@ -376,7 +392,7 @@ export default function ExpenseReceiptForm({ expenseAccounts, paymentAccounts, i
                     <th className="px-2 py-1.5 text-center font-normal w-16">税率</th>
                     <th className="px-2 py-1.5 text-right font-normal w-16">消費税</th>
                     <th className="px-2 py-1.5 text-left font-normal min-w-[100px]">費用科目</th>
-                    <th className="px-2 py-1.5 text-left font-normal min-w-[120px]">商品マスタ紐付け</th>
+                    <th className="px-2 py-1.5 text-left font-normal min-w-[120px]">商品マスタ紐付け<br /><span className="text-[10px] text-warm-400 font-normal">自動選択・変更可</span></th>
                     <th className="px-2 py-1.5 w-8"></th>
                   </tr>
                 </thead>
@@ -473,7 +489,7 @@ export default function ExpenseReceiptForm({ expenseAccounts, paymentAccounts, i
               </table>
             </div>
             <p className="text-[10px] text-warm-400 mt-1">
-              📦 = 在庫追跡対象。紐付けると仕入時に在庫が自動加算されます。<br />
+              📦 = 在庫追跡対象。商品名から自動選択済み。誤マッチや在庫加算不要な場合は「紐付けなし」に変更してください。<br />
               💡 消費税は記録のみ（免税事業者のため税込経理を維持）。課税事業者移行後に還付計算へ利用します。
             </p>
           </div>

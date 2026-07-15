@@ -4,7 +4,8 @@ import ExpenseReceiptForm from '@/components/admin/accounting/ExpenseReceiptForm
 
 export const revalidate = 0
 
-const PAYMENT_CODES = ['101', '102', '202', '303']
+// 101 現金 / 102 普通預金 / 106 電子マネー / 202 未払金（クレカ・後払いQR） / 303 事業主借
+const PAYMENT_CODES = ['101', '102', '106', '202', '303']
 
 export default async function ExpensePage() {
   const [{ data: accounts }, { data: items }] = await Promise.all([

@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { supabaseAdmin } from '@/lib/supabase'
 import JournalEntryForm from '@/components/admin/accounting/JournalEntryForm'
 import ReceiptLink from '@/components/admin/accounting/ReceiptLink'
+import DeleteEntryButton from '@/components/admin/accounting/DeleteEntryButton'
 
 export const revalidate = 0
 
@@ -28,11 +29,12 @@ export default async function JournalPage() {
       <div className="space-y-2">
         {(entries as Entry[] ?? []).map(e => (
           <div key={e.id} className="bg-white border border-warm-100 rounded-xl p-4">
-            <div className="flex justify-between text-sm mb-2">
-              <span className="text-warm-500">{e.entry_date}</span>
-              <span className="flex items-center gap-2 text-warm-700">
-                {e.description}
+            <div className="flex justify-between items-start text-sm mb-2 gap-3">
+              <span className="text-warm-500 shrink-0">{e.entry_date}</span>
+              <span className="flex items-center gap-2 text-warm-700 flex-1 justify-end flex-wrap">
+                <span>{e.description}</span>
                 {e.receipt_url && <ReceiptLink path={e.receipt_url} />}
+                <DeleteEntryButton entryId={e.id} description={e.description} />
               </span>
             </div>
             <table className="w-full text-sm">

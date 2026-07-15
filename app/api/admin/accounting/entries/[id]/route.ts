@@ -61,7 +61,38 @@ export async function DELETE(_req: NextRequest, { params }: { params: { id: stri
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
+  // 仕入明細（purchase_lines）で在庫加算していた分を巻き戻す
+  const { data: purchaseLines } = await supabaseAdmin
+    .from('purchase_lines').select('id, item_id, quantity')
+    .eq('journal_entry_id', params.id)
+  let stockReverted = 0
+  for (const pl of purchaseLines ?? []) {
+    if (!pl.item_id) continue
+    // その明細に紐付く stock_movements を取得（note='purchase_line:{id}'）
+    const { data: moves } = await supabaseAdmin
+      .from('stock_movements').select('id, quantity_delta')
+      .eq('note', `purchase_line:${pl.id}`)
+    for (const m of moves ?? []) {
+      const { data: it } = await supabaseAdmin
+        .from('items').select('current_quantity').eq('id', pl.item_id).maybeSingle()
+      const cur = Number(it?.current_quantity ?? 0)
+      const delta = Number(m.quantity_delta)
+      await supabaseAdmin.from('items').update({ current_quantity: cur - delta }).eq('id', pl.item_id)
+      await supabaseAdmin.from('stock_movements').delete().eq('id', m.id)
+      stockReverted += 1
+    }
+  }
+
+  // Drive レシート取込との紐付けをクリア（再取込を可能にする）
+  const { data: header } = await supabaseAdmin
+    .from('journal_entries').select('receipt_url').eq('id', params.id).maybeSingle()
+  if (header?.receipt_url) {
+    await supabaseAdmin.from('drive_receipt_imports')
+      .delete().eq('receipt_path', header.receipt_url)
+  }
+
+  // 仕訳本体を削除（journal_lines / purchase_lines は ON DELETE CASCADE）
   const { error } = await supabaseAdmin.from('journal_entries').delete().eq('id', params.id)
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-  return NextResponse.json({ ok: true })
+  return NextResponse.json({ ok: true, stockReverted })
 }

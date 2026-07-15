@@ -8,6 +8,14 @@ interface Item {
   sale_price: number | null; cost_price: number | null
   is_sellable: boolean; track_inventory: boolean; is_active: boolean
   tax_rate?: number
+  display_status?: 'available' | 'sold_out' | 'coming_soon'
+  on_menu_display?: boolean
+}
+
+const STATUS_LABEL: Record<'available' | 'sold_out' | 'coming_soon', { label: string; badge: string }> = {
+  available:   { label: '販売中',   badge: 'bg-green-100 text-green-700' },
+  sold_out:    { label: '売り切れ', badge: 'bg-red-100 text-red-700' },
+  coming_soon: { label: '準備中',   badge: 'bg-blue-100 text-blue-700' },
 }
 interface Comp { id: string; component_item_id: string; quantity: number; items?: { name: string; unit: string; cost_price: number | null } }
 interface Props {
@@ -25,7 +33,7 @@ const catLabel = (v: string) => CATS.find(c => c.value === v)?.label ?? v
 export default function ItemManager({ initialItems, dishCost, componentsByDish }: Props) {
   const router = useRouter()
   const [items, setItems] = useState(initialItems)
-  const [form, setForm] = useState({ name: '', category: 'ingredient', unit: '個', salePrice: '', costPrice: '', isSellable: false, trackInventory: true, taxRate: '0.10' })
+  const [form, setForm] = useState({ name: '', category: 'ingredient', unit: '個', salePrice: '', costPrice: '', isSellable: false, trackInventory: true, taxRate: '0.10', displayStatus: 'available' as 'available' | 'sold_out' | 'coming_soon', onMenuDisplay: false })
   const [error, setError] = useState<string | null>(null)
   const [filter, setFilter] = useState('all')
   const ingredients = items.filter(i => i.is_active).map(i => ({ id: i.id, name: i.name, category: i.category, unit: i.unit }))
@@ -40,12 +48,14 @@ export default function ItemManager({ initialItems, dishCost, componentsByDish }
         costPrice: form.costPrice === '' ? null : Number(form.costPrice),
         isSellable: form.isSellable, trackInventory: form.trackInventory,
         taxRate: Number(form.taxRate),
+        displayStatus: form.displayStatus,
+        onMenuDisplay: form.onMenuDisplay,
       }),
     })
     const json = await res.json()
     if (!res.ok) { setError(json.error ?? '追加に失敗しました'); return }
     setItems(i => [...i, json.item])
-    setForm({ name: '', category: 'ingredient', unit: '個', salePrice: '', costPrice: '', isSellable: false, trackInventory: true, taxRate: '0.10' })
+    setForm({ name: '', category: 'ingredient', unit: '個', salePrice: '', costPrice: '', isSellable: false, trackInventory: true, taxRate: '0.10', displayStatus: 'available' as 'available' | 'sold_out' | 'coming_soon', onMenuDisplay: false })
     router.refresh()
   }
 
@@ -57,10 +67,29 @@ export default function ItemManager({ initialItems, dishCost, componentsByDish }
         salePrice: it.sale_price, costPrice: it.cost_price,
         isSellable: it.is_sellable, trackInventory: it.track_inventory,
         taxRate: it.tax_rate ?? 0.10,
+        displayStatus: it.display_status ?? 'available',
+        onMenuDisplay: it.on_menu_display ?? false,
         isActive: !it.is_active,
       }),
     })
     if (res.ok) setItems(list => list.map(x => x.id === it.id ? { ...x, is_active: !it.is_active } : x))
+  }
+
+  const patchItem = async (it: Item, patch: Partial<Item>) => {
+    const merged = { ...it, ...patch }
+    const res = await fetch(`/api/admin/items/${it.id}`, {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name: merged.name, category: merged.category, unit: merged.unit,
+        salePrice: merged.sale_price, costPrice: merged.cost_price,
+        isSellable: merged.is_sellable, trackInventory: merged.track_inventory,
+        taxRate: merged.tax_rate ?? 0.10,
+        displayStatus: merged.display_status ?? 'available',
+        onMenuDisplay: merged.on_menu_display ?? false,
+        isActive: merged.is_active,
+      }),
+    })
+    if (res.ok) setItems(list => list.map(x => x.id === it.id ? merged : x))
   }
 
   const remove = async (it: Item) => {
@@ -95,6 +124,15 @@ export default function ItemManager({ initialItems, dishCost, componentsByDish }
         <div className="flex gap-4 mt-2 text-sm text-warm-600 flex-wrap items-center">
           <label className="flex items-center gap-1"><input type="checkbox" checked={form.isSellable} onChange={e => setForm({ ...form, isSellable: e.target.checked })} /> 販売可</label>
           <label className="flex items-center gap-1"><input type="checkbox" checked={form.trackInventory} onChange={e => setForm({ ...form, trackInventory: e.target.checked })} /> 在庫管理</label>
+          <label className="flex items-center gap-1"><input type="checkbox" checked={form.onMenuDisplay} onChange={e => setForm({ ...form, onMenuDisplay: e.target.checked })} /> 🏠 ホームメニュー掲載</label>
+          <label className="flex items-center gap-1">状態
+            <select value={form.displayStatus} onChange={e => setForm({ ...form, displayStatus: e.target.value as 'available' | 'sold_out' | 'coming_soon' })}
+              className="border border-warm-200 rounded px-2 py-1 text-xs">
+              <option value="available">販売中</option>
+              <option value="sold_out">売り切れ</option>
+              <option value="coming_soon">準備中</option>
+            </select>
+          </label>
           <label className="flex items-center gap-1">消費税
             <select value={form.taxRate} onChange={e => setForm({ ...form, taxRate: e.target.value })}
               className="border border-warm-200 rounded px-2 py-1 text-xs">
@@ -127,6 +165,12 @@ export default function ItemManager({ initialItems, dishCost, componentsByDish }
                       税{Math.round(it.tax_rate * 100)}%
                     </span>
                   )}
+                  {it.on_menu_display && (
+                    <span className="text-xs bg-warm-500 text-white px-2 py-0.5 rounded-full">🏠 メニュー掲載</span>
+                  )}
+                  <span className={`text-xs px-2 py-0.5 rounded-full ${STATUS_LABEL[it.display_status ?? 'available'].badge}`}>
+                    {STATUS_LABEL[it.display_status ?? 'available'].label}
+                  </span>
                 </div>
                 <p className="text-warm-500 text-sm mt-1">
                   単位 {it.unit}
@@ -138,7 +182,19 @@ export default function ItemManager({ initialItems, dishCost, componentsByDish }
                   <RecipeEditor dishId={it.id} ingredients={ingredients.filter(i => i.id !== it.id)} initialComponents={componentsByDish[it.id] ?? []} />
                 )}
               </div>
-              <div className="flex flex-col gap-2 shrink-0">
+              <div className="flex flex-col gap-1.5 shrink-0 min-w-[130px]">
+                <select value={it.display_status ?? 'available'}
+                  onChange={e => patchItem(it, { display_status: e.target.value as 'available' | 'sold_out' | 'coming_soon' })}
+                  className="text-xs border border-warm-200 rounded px-2 py-1">
+                  <option value="available">販売中</option>
+                  <option value="sold_out">売り切れ</option>
+                  <option value="coming_soon">準備中</option>
+                </select>
+                <label className="flex items-center gap-1 text-xs text-warm-600">
+                  <input type="checkbox" checked={it.on_menu_display ?? false}
+                    onChange={e => patchItem(it, { on_menu_display: e.target.checked })} />
+                  🏠 メニュー掲載
+                </label>
                 <button onClick={() => toggleActive(it)} className={`text-xs px-3 py-1 rounded-lg ${it.is_active ? 'bg-warm-100 text-warm-600 hover:bg-warm-200' : 'bg-green-500 text-white hover:bg-green-600'}`}>{it.is_active ? '無効化' : '有効化'}</button>
                 <button onClick={() => remove(it)} className="text-xs px-3 py-1 rounded-lg bg-red-50 text-red-500 hover:bg-red-100">削除</button>
               </div>

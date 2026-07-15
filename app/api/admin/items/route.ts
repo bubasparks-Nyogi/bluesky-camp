@@ -39,6 +39,9 @@ export async function POST(req: NextRequest) {
   try { body = await req.json() } catch {
     return NextResponse.json({ error: 'リクエスト形式が不正です' }, { status: 400 })
   }
+  const displayStatus = (['available', 'sold_out', 'coming_soon'] as const).includes(body.displayStatus as never)
+    ? body.displayStatus as 'available' | 'sold_out' | 'coming_soon'
+    : 'available'
   const input: ItemInput = {
     name: String(body.name ?? ''),
     category: body.category as ItemInput['category'],
@@ -48,6 +51,8 @@ export async function POST(req: NextRequest) {
     isSellable: Boolean(body.isSellable),
     trackInventory: Boolean(body.trackInventory),
     taxRate: normalizeTaxRate(body.taxRate),
+    displayStatus,
+    onMenuDisplay: Boolean(body.onMenuDisplay),
   }
   const err = validateItem(input)
   if (err) return NextResponse.json({ error: err }, { status: 400 })
@@ -57,6 +62,8 @@ export async function POST(req: NextRequest) {
     sale_price: input.salePrice, cost_price: input.costPrice,
     is_sellable: input.isSellable, track_inventory: input.trackInventory,
     tax_rate: input.taxRate,
+    display_status: input.displayStatus,
+    on_menu_display: input.onMenuDisplay,
     sort_order: Number.isInteger(body.sortOrder) ? body.sortOrder : 0,
   }).select().single()
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })

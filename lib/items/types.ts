@@ -1,4 +1,5 @@
 export type ItemCategory = 'ingredient' | 'dish' | 'goods' | 'drink' | 'supply'
+export type DisplayStatus = 'available' | 'sold_out' | 'coming_soon'
 
 export interface ItemInput {
   name: string
@@ -9,6 +10,8 @@ export interface ItemInput {
   isSellable: boolean
   trackInventory: boolean
   taxRate?: number
+  displayStatus?: DisplayStatus
+  onMenuDisplay?: boolean
 }
 
 export interface ComponentCostLine {

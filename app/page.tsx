@@ -4,6 +4,7 @@ export const revalidate = 60
 import Hero            from '@/components/home/Hero'
 import Experience      from '@/components/home/Experience'
 import Facilities      from '@/components/home/Facilities'
+import MenuSection     from '@/components/home/MenuSection'
 import Plan            from '@/components/home/Plan'
 import Rules           from '@/components/home/Rules'
 import BookingCalendar from '@/components/home/BookingCalendar'
@@ -29,12 +30,21 @@ async function getFaqs() {
   return data ?? []
 }
 
+async function getMenuItems() {
+  const { data } = await supabaseAdmin
+    .from('items').select('id, name, category, unit, sale_price, display_status')
+    .eq('is_active', true).eq('on_menu_display', true)
+    .order('category').order('sort_order').order('name')
+  return data ?? []
+}
+
 export default async function HomePage() {
-  const [heroPhotos, facilityPhotos, faqs, settings] = await Promise.all([
+  const [heroPhotos, facilityPhotos, faqs, settings, menuItems] = await Promise.all([
     getPhotos('hero'),
     getPhotos('facilities'),
     getFaqs(),
     fetchSiteSettings().catch(() => null),
+    getMenuItems(),
   ])
 
   return (
@@ -43,6 +53,7 @@ export default async function HomePage() {
       <NewsSection />
       <Experience />
       <Facilities photos={facilityPhotos} />
+      <MenuSection items={menuItems} />
       <Plan />
       <Rules />
       <section id="booking" className="py-20 px-4 bg-warm-100">
